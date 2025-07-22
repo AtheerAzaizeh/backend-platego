@@ -1,4 +1,4 @@
-const Report = require('../models/Report');
+const Report = require('../models/report');
 
 // מביא את כל הדוחות של משתמש מחובר
 exports.getReports = async (req, res) => {
