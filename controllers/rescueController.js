@@ -1,4 +1,4 @@
-const RescueRequest = require('../models/rescueRequest');
+const RescueRequest = require('../models/RescueRequest');
 
 exports.sendRescueRequest = async (req, res) => {
   try {
