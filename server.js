@@ -25,9 +25,10 @@ const chatRoutes = require('./routes/chats');
 const messageRoutes = require('./routes/messages');
 const notificationRoutes = require('./routes/notification');
 const rescueRoutes = require('./routes/rescue');
+const carRoutes = require('./routes/cars');
 
 
-
+app.use('/api/cars', carRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/auth', authRoutes);
