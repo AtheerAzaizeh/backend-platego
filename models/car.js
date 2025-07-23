@@ -1,14 +1,14 @@
 const mongoose = require('mongoose');
 
 const carSchema = new mongoose.Schema({
-  carCompany: String,
-  model: String,
-  color: String,
-  year: Number,
-  image: String,
-  plate: { type: String, unique: true },
-  numberOfReports: Number,
-  userID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-}, { timestamps: true });
+  carCompany: { type: String, required: true },
+  model: { type: String, required: true },
+  color: { type: String, required: true },
+  year: { type: Number, required: true },
+  image: { type: String },
+  plate: { type: String, required: true, unique: true },
+  numberOfReports: { type: Number, default: 0 },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+});
 
 module.exports = mongoose.model('Car', carSchema);

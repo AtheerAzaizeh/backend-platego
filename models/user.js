@@ -1,21 +1,16 @@
 const mongoose = require('mongoose');
 
-const carSchema = new mongoose.Schema({
-  manufacturer: String,
-  model: String,
-  plateNumber: String,
-  year: Number,
-}, { _id: false });
-
 const userSchema = new mongoose.Schema({
-  phoneNumber: String,
   firstName: String,
   lastName: String,
-  email: { type: String, unique: true },
+  phoneNumber: String,
+  email: String,
   password: String,
+  role: String,
   address: String,
   img: String,
-  cars: [carSchema]
-}, { timestamps: true });
+  volunteerStatus: String,
+  notify: Boolean,
+});
 
 module.exports = mongoose.model('User', userSchema);

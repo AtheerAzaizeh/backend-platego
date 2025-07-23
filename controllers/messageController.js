@@ -1,70 +1,44 @@
 const Message = require('../models/message');
 const Chat = require('../models/chat');
 
-// שליחת הודעה חדשה
-exports.addMessage = async (req, res) => {
-    const { fromUserID, toUserID, carID, message, date } = req.body;
+exports.getMessagesByChatId = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const messages = await Message.find({ chat: chatId })
+      .populate('sender', 'firstName lastName img')
+      .sort({ date: 1 });
 
-    try {
-        // בדיקה אם קיים צ'אט בין שני המשתמשים (לא תלוי ברכב)
-        let chat = await Chat.findOne({
-            users: { $all: [fromUserID, toUserID] },
-            $expr: { $eq: [{ $size: "$users" }, 2] }
-        });
-
-        if (!chat) {
-            // יצירת צ'אט חדש
-            chat = new Chat({
-                users: [fromUserID, toUserID],
-                lastMessage: message,
-                lastMessageTime: date
-            });
-            await chat.save();
-        } else {
-            // עדכון הודעה אחרונה בצ'אט קיים
-            chat.lastMessage = message;
-            chat.lastMessageTime = date;
-            await chat.save();
-        }
-
-        // יצירת ההודעה
-        const newMessage = new Message({
-            chatID: chat._id,
-            fromUserID,
-            toUserID,
-            carID,
-            message,
-            date
-        });
-
-        await newMessage.save();
-
-        res.json({ ...newMessage.toObject(), chatID: chat._id });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error adding message' });
-    }
+    res.status(200).json({ messages });
+  } catch (err) {
+    console.error('Get messages error:', err);
+    res.status(500).json({ message: 'Server error while fetching messages' });
+  }
 };
 
-// קבלת הודעות לפי רכב או משתמש
-exports.getMessages = async (req, res) => {
-    const { carID } = req.query;
-    const userID = req.user.id;
+exports.sendMessage = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { message } = req.body;
+    const senderId = req.user.id;
 
-    try {
-        const messages = await Message.find({
-            $or: [
-                { carID },
-                { fromUserID: userID },
-                { toUserID: userID }
-            ]
-        });
+    const newMessage = new Message({
+      chat: chatId,
+      message,
+      sender: senderId,
+      date: new Date()
+    });
 
-        res.json(messages);
+    await newMessage.save();
 
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error fetching messages' });
-    }
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: message,
+      lastMessageTime: new Date()
+    });
+
+    res.status(201).json({ message: 'Message sent', data: newMessage });
+
+  } catch (err) {
+    console.error('Send message error:', err);
+    res.status(500).json({ message: 'Server error while sending message' });
+  }
 };

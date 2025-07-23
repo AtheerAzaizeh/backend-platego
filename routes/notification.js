@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const verifyToken = require('../middleware/authMiddleware');
 const notificationController = require('../controllers/notificationController');
-const authenticateToken = require('../middleware/authMiddleware');
 
-router.get('/', authenticateToken, notificationController.getAllRescueRequests);
+router.get('/my', verifyToken, notificationController.getMyNotifications);
+router.delete('/:id', verifyToken, notificationController.deleteNotification);
 
 module.exports = router;

@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const reportController = require('../controllers/reportController');
-const authenticateToken = require('../middleware/authMiddleware');
+const verifyToken = require('../middleware/authMiddleware');
 
-router.get('/', authenticateToken, reportController.getReports);
-router.get('/:id', authenticateToken, reportController.getReportById);
-router.post('/', authenticateToken, reportController.addReport);
-router.delete('/:id', authenticateToken, reportController.deleteReport);
-
+router.get('/car/:plate', verifyToken, reportController.getCarByPlate);
+router.post('/make', verifyToken, reportController.makeReport);
+router.get('/my', verifyToken, reportController.getMyReports);
+router.delete('/:id', verifyToken, reportController.deleteReport);
 
 module.exports = router;

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const chatSchema = new mongoose.Schema({
-  users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   lastMessage: String,
-  lastMessageTime: Date
-}, { timestamps: true });
+  lastMessageTime: Date,
+  participant: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+});
 
 module.exports = mongoose.model('Chat', chatSchema);

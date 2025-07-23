@@ -19,7 +19,7 @@ exports.registerUser = async (req, res) => {
             img,
             cars
         });
-
+        
         console.log('Registering user:', newUser);
 
         await newUser.save();

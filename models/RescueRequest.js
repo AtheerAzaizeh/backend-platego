@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
-const rescueRequestSchema = new mongoose.Schema({
+const rescueSchema = new mongoose.Schema({
   location: String,
   time: String,
   reason: String,
-  userID: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-}, { timestamps: true });
+  status: { type: String, default: 'pending' }, // pending | accepted | done | canceled
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+});
 
-module.exports = mongoose.model('RescueRequest', rescueRequestSchema);
+module.exports = mongoose.model('RescueRequest', rescueSchema);

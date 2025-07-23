@@ -1,50 +1,39 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
 const cors = require('cors');
-const path = require('path');
+const bodyParser = require('body-parser');
+const connectDB = require('./config/db');
+
+// Load .env
+dotenv.config();
+
+// Connect to DB
+connectDB();
+
+// Initialize Express
 const app = express();
-const pool = require('./models/db');
 
-
-app.use(bodyParser.json());
+// Middleware
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
+// Routes
 const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const carRoutes = require('./routes/cars');
 const reportRoutes = require('./routes/reports');
-const messageRoutes = require('./routes/messages');
 const chatRoutes = require('./routes/chats');
-const rescueRoutes = require('./routes/rescue'); 
-const volunteerRoutes = require('./routes/volunteer'); 
+const messageRoutes = require('./routes/messages');
 const notificationRoutes = require('./routes/notification');
-const volunteerUpdatesRouter = require('./routes/volunteerUpdates');
-const rescueRequestRoutes = require('./routes/rescue');
+const rescueRoutes = require('./routes/rescue');
 
 
 
-
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/cars', carRoutes);
+app.use('/api/notification', notificationRoutes);
 app.use('/api/reports', reportRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/chats', chatRoutes);
-app.use('/api/rescue', rescueRoutes); 
-app.use('/api/volunteer', volunteerRoutes); 
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/volunteerUpdates', volunteerUpdatesRouter);
-app.use('/api/rescue-requests', rescueRequestRoutes);
-
-
-
-app.use(express.static(path.join(__dirname, '../frontend')));
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
-});
-
-app.listen(3000, () => {
-    console.log('Server running on port 3000');
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/message', messageRoutes);
+app.use('/api/rescue', rescueRoutes);
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
