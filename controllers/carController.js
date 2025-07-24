@@ -13,12 +13,16 @@ exports.getCars = async (req, res) => {
     }
 };
 
-// הוספת רכב חדש למשתמש
 exports.addCar = async (req, res) => {
     const userID = req.user.id;
-    const { carCompany, model, color, year, image, plate, numberOfReports } = req.body;
+    const { carCompany, model, color, year, image, plate } = req.body;
 
     try {
+        const existingCar = await Car.findOne({ plate });
+        if (existingCar) {
+            return res.status(400).json({ message: 'Car with this plate already exists.' });
+        }
+
         const newCar = new Car({
             carCompany,
             model,
@@ -26,16 +30,16 @@ exports.addCar = async (req, res) => {
             year,
             image,
             plate,
-            numberOfReports,
-            userID
+            numberOfReports: 0,
+            owner: userID
         });
 
         await newCar.save();
-        res.json(newCar);
+        res.status(201).json(newCar);
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error adding car' });
+        console.error("Error adding car:", err);
+        res.status(500).json({ message: 'Server error while adding car' });
     }
 };
 
