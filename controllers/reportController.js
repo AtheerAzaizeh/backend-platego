@@ -66,6 +66,7 @@ exports.makeReport = async (req, res) => {
     if (!chat) {
       chat = new Chat({
         participant: [senderId, receiverId],
+        car: car._id,
         lastMessage: 'You have received a report on your car',
         lastMessageTime: new Date()
       });
