@@ -5,7 +5,7 @@ const authenticateToken = require('../middleware/authMiddleware');
 
 
 
-router.get('/', authenticateToken, carController.getCars);
+router.get('/', authenticateToken, carController.getMyCars);
 router.post('/', authenticateToken, carController.addCar);
 router.delete('/:id', authenticateToken, carController.deleteCar);
 router.get('/id/:id', authenticateToken, carController.findCarById); 

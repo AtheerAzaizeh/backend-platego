@@ -1,15 +1,13 @@
 const Car = require('../models/car');
 
-// מביא את כל הרכבים של משתמש לפי userID
-exports.getCars = async (req, res) => {
-    const userID = req.user.id;
-
+exports.getMyCars = async (req, res) => {
     try {
-        const cars = await Car.find({ userID });
+        const userId = req.user.id;
+        const cars = await Car.find({ owner: userId });
         res.json(cars);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error fetching cars' });
+        console.error("Error fetching user's cars:", err);
+        res.status(500).json({ message: 'Error fetching your cars' });
     }
 };
 
@@ -43,22 +41,22 @@ exports.addCar = async (req, res) => {
     }
 };
 
-// מחיקת רכב לפי carID + userID
 exports.deleteCar = async (req, res) => {
-    const carID = req.params.id;
     const userID = req.user.id;
+    const carId = req.params.id;
 
     try {
-        const deleted = await Car.findOneAndDelete({ _id: carID, userID });
-        if (!deleted) {
-            return res.status(404).json({ message: 'Car not found' });
+        const car = await Car.findOne({ _id: carId, owner: userID });
+        if (!car) {
+            return res.status(404).json({ message: 'Car not found or unauthorized' });
         }
 
+        await car.deleteOne();
         res.json({ message: 'Car deleted successfully' });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error deleting car' });
+        console.error("Error deleting car:", err);
+        res.status(500).json({ message: 'Server error while deleting car' });
     }
 };
 
