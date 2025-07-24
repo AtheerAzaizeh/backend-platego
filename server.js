@@ -2,21 +2,34 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const connectDB = require('./config/db');
+const mongoose = require('mongoose');
+const http = require('http');
+const socketio = require('socket.io');
+
+
 
 // Load .env
 dotenv.config();
 
-// Connect to DB
-connectDB();
 
 // Initialize Express
 const app = express();
 
+const server = http.createServer(app);
+const io = socketio(server, {
+    cors: {
+        origin: '*'
+    }
+});
 // Middleware
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -35,6 +48,25 @@ app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/message', messageRoutes);
 app.use('/api/rescue', rescueRoutes);
-// Start server
+
+// MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('DB connected'))
+    .catch(err => console.error('DB Error', err));
+
+// Socket.IO listeners
+io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+
+    socket.on('joinAsVolunteer', () => {
+        socket.join('volunteers');
+        console.log(`Socket ${socket.id} joined 'volunteers' room`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

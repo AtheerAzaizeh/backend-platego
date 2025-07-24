@@ -1,23 +1,42 @@
+const Notification = require('../models/notification');
+const User = require('../models/user');
 const RescueRequest = require('../models/RescueRequest');
 
-exports.sendRescueRequest = async (req, res) => {
-  try {
-    const { location, time, reason } = req.body;
-    const userId = req.user.id;
+exports.createRescueRequest = async (req, res) => {
+    try {
+        const { location, time, reason } = req.body;
+        const userId = req.user.id;
 
-    const request = new RescueRequest({
-      location,
-      time,
-      reason,
-      user: userId
-    });
+        const request = new RescueRequest({
+            user: userId,
+            location,
+            time,
+            reason
+        });
 
-    await request.save();
-    res.status(201).json({ message: 'Rescue request sent', request });
-  } catch (err) {
-    console.error('Send rescue error:', err);
-    res.status(500).json({ message: 'Server error while sending rescue request' });
-  }
+        await request.save();
+
+        const volunteers = await User.find({ role: 'volunteer' });
+
+        const notifications = volunteers.map(vol => ({
+            user: vol._id,
+            message: `New rescue request near ${location}`
+        }));
+
+        await Notification.insertMany(notifications);
+
+        req.io.to('volunteers').emit('newRescueRequest', {
+            message: `New rescue request: ${reason}`,
+            location,
+            time,
+        });
+
+        res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
+
+    } catch (err) {
+        console.error("Rescue error:", err);
+        res.status(500).json({ message: 'Error creating rescue request' });
+    }
 };
 
 exports.getMyRescueRequests = async (req, res) => {
