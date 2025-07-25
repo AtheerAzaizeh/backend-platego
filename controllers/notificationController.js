@@ -1,4 +1,6 @@
 const Notification = require('../models/notification');
+const Car = require('../models/car');
+const RescueRequest = require('../models/RescueRequest');
 
 exports.getMyNotifications = async (req, res) => {
   try {
@@ -31,15 +33,21 @@ exports.deleteNotification = async (req, res) => {
 
 exports.saveNotification = async (req, res) => {
   try {
-    const { message } = req.body;
-    const userId = req.user.id;
+    const { message, carPlate, reason, carImage } = req.body;
+const userId = req.user.id;
 
-    const newNotification = new Notification({
-      user: userId,
-      message
-    });
+const car = await Car.findOne({ owner: userId });
+const rescue = await RescueRequest.findOne({ user: userId }).sort({ createdAt: -1 });
 
-    await newNotification.save();
+const newNotification = new Notification({
+  user: userId,
+  message: `New rescue request: ${rescue?.reason || 'Unknown'}`,
+  carPlate: car?.plate || 'Unknown',
+  reason: rescue?.reason || 'N/A',
+  carImage: car?.image || 'images/default-car.png'
+});
+
+await newNotification.save();
     res.status(201).json({ message: 'Notification saved successfully' });
   } catch (err) {
     console.error('Save notification error:', err);
