@@ -1,0 +1,554 @@
+[
+  {
+    "city": "Jerusalem",
+    "lat": 31.7789,
+    "lng": 35.2256,
+    "population": 936425.0,
+    "admin_name": "Jerusalem",
+    "capital": "primary"
+  },
+  {
+    "city": "Haifa",
+    "lat": 32.8192,
+    "lng": 34.9992,
+    "population": 600000.0,
+    "admin_name": "Haifa",
+    "capital": "admin"
+  },
+  {
+    "city": "Tel Aviv-Yafo",
+    "lat": 32.08,
+    "lng": 34.78,
+    "population": 467875.0,
+    "admin_name": "Tel Aviv",
+    "capital": "admin"
+  },
+  {
+    "city": "Rishon LeẔiyyon",
+    "lat": 31.95,
+    "lng": 34.8,
+    "population": 249860.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Petaẖ Tiqwa",
+    "lat": 32.0833,
+    "lng": 34.8833,
+    "population": 236169.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Ashdod",
+    "lat": 31.7978,
+    "lng": 34.6503,
+    "population": 220174.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Netanya",
+    "lat": 32.3286,
+    "lng": 34.8567,
+    "population": 217200.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Beersheba",
+    "lat": 31.2522,
+    "lng": 34.7867,
+    "population": 209000.0,
+    "admin_name": "Southern",
+    "capital": "admin"
+  },
+  {
+    "city": "Holon",
+    "lat": 32.0167,
+    "lng": 34.7667,
+    "population": 194300.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Bené Beraq",
+    "lat": 32.0807,
+    "lng": 34.8338,
+    "population": 193774.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Ramat Gan",
+    "lat": 32.07,
+    "lng": 34.8235,
+    "population": 159200.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Ashqelon",
+    "lat": 31.6658,
+    "lng": 34.5664,
+    "population": 134454.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Reẖovot",
+    "lat": 31.8914,
+    "lng": 34.8078,
+    "population": 132671.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Bat Yam",
+    "lat": 32.0231,
+    "lng": 34.7503,
+    "population": 128800.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Bet Shemesh",
+    "lat": 31.7514,
+    "lng": 34.9886,
+    "population": 118700.0,
+    "admin_name": "Jerusalem"
+  },
+  {
+    "city": "Kefar Sava",
+    "lat": 32.1858,
+    "lng": 34.9077,
+    "population": 100800.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Modi‘in Makkabbim Re‘ut",
+    "lat": 31.9339,
+    "lng": 34.9856,
+    "population": 97097.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Hadera",
+    "lat": 32.45,
+    "lng": 34.9167,
+    "population": 95700.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Herẕliyya",
+    "lat": 32.1556,
+    "lng": 34.8422,
+    "population": 93989.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Nazareth",
+    "lat": 32.7019,
+    "lng": 35.3033,
+    "population": 83400.0,
+    "admin_name": "Northern",
+    "capital": "admin"
+  },
+  {
+    "city": "Lod",
+    "lat": 31.95,
+    "lng": 34.9,
+    "population": 75700.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Ramla",
+    "lat": 31.9275,
+    "lng": 34.8625,
+    "population": 75500.0,
+    "admin_name": "Central",
+    "capital": "admin"
+  },
+  {
+    "city": "Ra‘ananna",
+    "lat": 32.1833,
+    "lng": 34.8667,
+    "population": 74000.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Qiryat Gat",
+    "lat": 31.61,
+    "lng": 34.7642,
+    "population": 65610.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Rahat",
+    "lat": 31.3925,
+    "lng": 34.7544,
+    "population": 64462.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Afula",
+    "lat": 32.6064,
+    "lng": 35.2881,
+    "population": 60000.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Nahariyya",
+    "lat": 33.0058,
+    "lng": 35.0989,
+    "population": 60000.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Givatayim",
+    "lat": 32.0697,
+    "lng": 34.8117,
+    "population": 59518.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Hod HaSharon",
+    "lat": 32.15,
+    "lng": 34.8833,
+    "population": 56659.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Rosh Ha‘Ayin",
+    "lat": 32.0833,
+    "lng": 34.95,
+    "population": 56300.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Qiryat Ata",
+    "lat": 32.8,
+    "lng": 35.1,
+    "population": 55464.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Umm el Faḥm",
+    "lat": 32.5194,
+    "lng": 35.1536,
+    "population": 55300.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Eilat",
+    "lat": 29.55,
+    "lng": 34.95,
+    "population": 51935.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Nes Ẕiyyona",
+    "lat": 31.9333,
+    "lng": 34.8,
+    "population": 50200.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "‘Akko",
+    "lat": 32.9278,
+    "lng": 35.0817,
+    "population": 48900.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "El‘ad",
+    "lat": 32.0523,
+    "lng": 34.9512,
+    "population": 48763.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Ramat HaSharon",
+    "lat": 32.1461,
+    "lng": 34.8394,
+    "population": 46700.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Karmiel",
+    "lat": 32.9136,
+    "lng": 35.2961,
+    "population": 45300.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Tiberias",
+    "lat": 32.7944,
+    "lng": 35.5333,
+    "population": 44200.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Eṭ Ṭaiyiba",
+    "lat": 32.2667,
+    "lng": 35.0,
+    "population": 43100.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Ben Zakkay",
+    "lat": 31.8833,
+    "lng": 34.7333,
+    "population": 42314.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Pardés H̱anna Karkur",
+    "lat": 32.4711,
+    "lng": 34.9675,
+    "population": 42100.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Qiryat Moẕqin",
+    "lat": 32.8333,
+    "lng": 35.0833,
+    "population": 42000.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Qiryat Ono",
+    "lat": 32.0636,
+    "lng": 34.8553,
+    "population": 41900.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Shefar‘am",
+    "lat": 32.8056,
+    "lng": 35.1694,
+    "population": 41600.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Qiryat Bialik",
+    "lat": 32.8333,
+    "lng": 35.0833,
+    "population": 39900.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Qiryat Yam",
+    "lat": 32.8333,
+    "lng": 35.0667,
+    "population": 39416.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Or Yehuda",
+    "lat": 32.0333,
+    "lng": 34.85,
+    "population": 36706.0,
+    "admin_name": "Tel Aviv"
+  },
+  {
+    "city": "Ẕefat",
+    "lat": 32.9658,
+    "lng": 35.4983,
+    "population": 35700.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Dimona",
+    "lat": 31.07,
+    "lng": 35.03,
+    "population": 34135.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Tamra",
+    "lat": 32.8536,
+    "lng": 35.1978,
+    "population": 34000.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Netivot",
+    "lat": 31.4167,
+    "lng": 34.5833,
+    "population": 31314.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Sakhnīn",
+    "lat": 32.8667,
+    "lng": 35.3,
+    "population": 31100.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Be’er Ya‘aqov",
+    "lat": 31.9436,
+    "lng": 34.8392,
+    "population": 29852.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Yehud",
+    "lat": 32.0333,
+    "lng": 34.8833,
+    "population": 29146.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Ofaqim",
+    "lat": 31.2833,
+    "lng": 34.6167,
+    "population": 29000.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Kefar Yona",
+    "lat": 32.3171,
+    "lng": 34.9358,
+    "population": 28025.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Rama",
+    "lat": 32.8511,
+    "lng": 35.3386,
+    "population": 26641.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Gedera",
+    "lat": 31.8139,
+    "lng": 34.7783,
+    "population": 26217.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Eṭ Ṭīra",
+    "lat": 32.2328,
+    "lng": 34.9503,
+    "population": 26200.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Migdal Ha‘Emeq",
+    "lat": 32.6714,
+    "lng": 35.2406,
+    "population": 25600.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Giv‘at Shemu’él",
+    "lat": 32.0781,
+    "lng": 34.8489,
+    "population": 25298.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Arad",
+    "lat": 31.2603,
+    "lng": 35.2147,
+    "population": 24436.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Yoqne‘am ‘Illit",
+    "lat": 32.6594,
+    "lng": 35.11,
+    "population": 24158.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Nesher",
+    "lat": 32.7711,
+    "lng": 35.0394,
+    "population": 23700.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Ma‘alot Tarshīḥā",
+    "lat": 33.0167,
+    "lng": 35.2708,
+    "population": 23550.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Qiryat Mal’akhi",
+    "lat": 31.7333,
+    "lng": 34.75,
+    "population": 23100.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Sederot",
+    "lat": 31.525,
+    "lng": 34.5969,
+    "population": 23090.0,
+    "admin_name": "Southern"
+  },
+  {
+    "city": "Qiryat Shemona",
+    "lat": 33.2075,
+    "lng": 35.5697,
+    "population": 23076.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Gan Yavne",
+    "lat": 31.7886,
+    "lng": 34.7053,
+    "population": 22453.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Tirat Karmel",
+    "lat": 32.7667,
+    "lng": 34.9667,
+    "population": 22200.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Kafr Qāsim",
+    "lat": 32.1142,
+    "lng": 34.9772,
+    "population": 21848.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Qalansuwa",
+    "lat": 32.285,
+    "lng": 34.9811,
+    "population": 21451.0,
+    "admin_name": "Central"
+  },
+  {
+    "city": "Bet She’an",
+    "lat": 32.5,
+    "lng": 35.5,
+    "population": 18200.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Or ‘Aqiva",
+    "lat": 32.5,
+    "lng": 34.9167,
+    "population": 17759.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Jisr ez Zarqā",
+    "lat": 32.5381,
+    "lng": 34.9122,
+    "population": 14930.0,
+    "admin_name": "Haifa"
+  },
+  {
+    "city": "Majdal Shams",
+    "lat": 33.2667,
+    "lng": 35.7667,
+    "population": 11405.0,
+    "admin_name": "Northern"
+  },
+  {
+    "city": "Atlit",
+    "lat": 32.6872,
+    "lng": 34.9383,
+    "population": 10639.0,
+    "admin_name": "Haifa"
+  }
+]
