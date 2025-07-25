@@ -5,7 +5,6 @@ exports.getMyNotifications = async (req, res) => {
     const userId = req.user.id;
     const notifications = await Notification.find({ user: userId })
       .sort({ createdAt: -1 })
-      .populate('linkedTo');
 
     res.status(200).json({ notifications });
   } catch (err) {
@@ -27,5 +26,23 @@ exports.deleteNotification = async (req, res) => {
   } catch (err) {
     console.error('Delete notification error:', err);
     res.status(500).json({ message: 'Server error while deleting notification' });
+  }
+};
+
+exports.saveNotification = async (req, res) => {
+  try {
+    const { message } = req.body;
+    const userId = req.user.id;
+
+    const newNotification = new Notification({
+      user: userId,
+      message
+    });
+
+    await newNotification.save();
+    res.status(201).json({ message: 'Notification saved successfully' });
+  } catch (err) {
+    console.error('Save notification error:', err);
+    res.status(500).json({ message: 'Server error while saving notification' });
   }
 };
