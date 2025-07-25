@@ -39,8 +39,9 @@ const messageRoutes = require('./routes/messages');
 const notificationRoutes = require('./routes/notification');
 const rescueRoutes = require('./routes/rescue');
 const carRoutes = require('./routes/cars');
+const volunteerRoutes = require('./routes/volunteers');
 
-
+app.use('/api/volunteer', volunteerRoutes);
 app.use('/api/cars', carRoutes);
 app.use('/api/notification', notificationRoutes);
 app.use('/api/reports', reportRoutes);
