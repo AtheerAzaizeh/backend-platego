@@ -60,7 +60,7 @@ exports.deleteCar = async (req, res) => {
     }
 };
 
-// חיפוש רכב לפי לוחית רישוי
+
 exports.findCarByPlate = async (req, res) => {
     const plate = req.params.plate;
 
@@ -79,7 +79,6 @@ exports.findCarByPlate = async (req, res) => {
     }
 };
 
-// חיפוש רכב לפי מזהה
 exports.findCarById = async (req, res) => {
     const carID = req.params.id;
 
@@ -98,7 +97,6 @@ exports.findCarById = async (req, res) => {
     }
 };
 
-// מונה רכבים של משתמש
 exports.countUserCars = async (req, res) => {
     const userID = req.user.id;
 
@@ -110,3 +108,31 @@ exports.countUserCars = async (req, res) => {
         res.status(500).json({ message: 'Error counting user cars' });
     }
 };
+
+exports.updateCar = async (req, res) => {
+    const userId = req.user.id;
+    const carId = req.params.id;
+    const { carCompany, model, color, year, image, plate } = req.body;
+
+    try {
+        const car = await Car.findOne({ _id: carId, owner: userId });
+        if (!car) {
+            return res.status(404).json({ message: 'Car not found or unauthorized' });
+        }
+
+        if (carCompany !== undefined) car.carCompany = carCompany;
+        if (model !== undefined) car.model = model;
+        if (color !== undefined) car.color = color;
+        if (year !== undefined) car.year = year;
+        if (image !== undefined) car.image = image;
+        if (plate !== undefined) car.plate = plate;
+
+        await car.save();
+        res.json({ message: 'Car updated successfully', car });
+
+    } catch (err) {
+        console.error('Error updating car:', err);
+        res.status(500).json({ message: 'Server error while updating car' });
+    }
+};
+
