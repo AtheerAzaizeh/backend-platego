@@ -7,5 +7,6 @@ router.get('/car/:plate', verifyToken, reportController.getCarByPlate);
 router.post('/make', verifyToken, reportController.makeReport);
 router.get('/my', verifyToken, reportController.getMyReports);
 router.delete('/:id', verifyToken, reportController.deleteReport);
+router.get('/all', verifyToken, reportController.getAllReports);
 
 module.exports = router;

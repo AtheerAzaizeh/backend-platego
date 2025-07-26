@@ -109,6 +109,19 @@ exports.getMyReports = async (req, res) => {
   }
 };
 
+exports.getAllReports = async (req, res) => {
+  try {
+    const reports = await Report.find()
+      .sort({ date: -1 })
+      .populate('sender', 'firstName lastName email img');
+
+    res.status(200).json({ reports });
+  } catch (err) {
+    console.error('Get all reports error:', err);
+    res.status(500).json({ message: 'Server error while fetching all reports' });
+  }
+};
+
 exports.deleteReport = async (req, res) => {
   try {
     const userId = req.user.id;
