@@ -1,48 +1,51 @@
-const Chat = require("../models/chat")
-const Car = require("../models/car")
-const User = require("../models/user")
-const Message = require("../models/message")
+const Chat = require("../models/chat");
+const Car = require("../models/car");
+const User = require("../models/user");
+const Message = require("../models/message");
 
 exports.createOrGetChat = async (req, res) => {
   try {
-    const userId = req.user.id
-    const { plate } = req.body
+    const userId = req.user.id;
+    const { plate } = req.body;
 
-    if (!plate) return res.status(400).json({ error: "Plate is required" })
+    if (!plate) return res.status(400).json({ error: "Plate is required" });
 
-    const car = await Car.findOne({ plate }).populate("owner")
-    if (!car) return res.status(404).json({ error: "Car not found" })
+    const car = await Car.findOne({ plate }).populate("owner");
+    if (!car) return res.status(404).json({ error: "Car not found" });
 
     if (car.owner.toString() === userId) {
-      return res.status(400).json({ error: "You can't message yourself" })
+      return res.status(400).json({ error: "You can't message yourself" });
     }
 
     let chat = await Chat.findOne({
       car: car._id,
       participants: { $all: [userId, car.owner._id], $size: 2 },
-    })
+    });
 
     if (!chat) {
       chat = await Chat.create({
         car: car._id,
         participants: [userId, car.owner._id],
-      })
+      });
     }
 
-    res.json({ chatId: chat._id })
+    res.json({ chatId: chat._id });
   } catch (err) {
-    console.error("Error in createOrGetChat:", err)
-    res.status(500).json({ error: "Internal server error" })
+    console.error("Error in createOrGetChat:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
 
 exports.getUserChats = async (req, res) => {
   try {
-    const userId = req.user.id
+    const userId = req.user.id;
 
-    const chats = await Chat.find({ participants: userId }).populate("car").populate("participants").lean()
+    const chats = await Chat.find({ participants: userId })
+      .populate("car")
+      .populate("participants")
+      .lean();
 
-    const chatIds = chats.map((chat) => chat._id)
+    const chatIds = chats.map((chat) => chat._id);
     const latestMessages = await Message.aggregate([
       { $match: { chat: { $in: chatIds } } },
       { $sort: { timestamp: -1 } },
@@ -52,43 +55,49 @@ exports.getUserChats = async (req, res) => {
           latest: { $first: "$$ROOT" },
         },
       },
-    ])
+    ]);
 
-    const latestMap = {}
-    latestMessages.forEach((m) => (latestMap[m._id.toString()] = m.latest.timestamp))
+    const latestMap = {};
+    const lastMessageTextMap = {};
+
+    latestMessages.forEach((m) => {
+      latestMap[m._id.toString()] = m.latest.timestamp;
+      lastMessageTextMap[m._id.toString()] = m.latest.text;
+    });
 
     chats.sort((a, b) => {
-      return (latestMap[b._id.toString()] || 0) - (latestMap[a._id.toString()] || 0)
-    })
+      return (latestMap[b._id.toString()] || 0) - (latestMap[a._id.toString()] || 0);
+    });
 
-   const response = await Promise.all(chats.map(async (chat) => {
-  const otherUser = chat.participants.find(p => p._id.toString() !== userId);
-  const otherCar = await Car.findOne({ owner: otherUser._id });
+    const response = await Promise.all(chats.map(async (chat) => {
+      const otherUser = chat.participants.find(p => p._id.toString() !== userId);
+      const otherCar = await Car.findOne({ owner: otherUser._id });
 
-  return {
-    _id: chat._id,
-    lastMessageTime: latestMap[chat._id.toString()] || null,
+      return {
+        _id: chat._id,
+        lastMessageTime: latestMap[chat._id.toString()] || null,
+        lastMessageText: lastMessageTextMap[chat._id.toString()] || "",
 
-    otherUser: {
-      firstName: otherUser?.firstName,
-      lastName: otherUser?.lastName,
-      img: otherUser?.img
-    },
+        otherUser: {
+          firstName: otherUser?.firstName,
+          lastName: otherUser?.lastName,
+          img: otherUser?.img
+        },
 
-    otherCar: {
-      plate: otherCar?.plate || "Unknown Plate",
-      image: otherCar?.image || "images/default-car.jpg"
-    }
-  };
-}));
+        otherCar: {
+          plate: otherCar?.plate || "Unknown Plate",
+          image: otherCar?.image || "images/default-car.jpg"
+        }
+      };
+    }));
 
-res.json(response);
+    res.json(response);
 
   } catch (err) {
-    console.error("Get chats error:", err)
-    res.status(500).json({ error: "Failed to fetch chats" })
+    console.error("Get chats error:", err);
+    res.status(500).json({ error: "Failed to fetch chats" });
   }
-}
+};
 
 exports.getChatById = async (req, res) => {
   try {
@@ -108,7 +117,6 @@ exports.getChatById = async (req, res) => {
     const viewer = chat.participants.find(p => p._id.toString() === userId);
     const otherUser = chat.participants.find(p => p._id.toString() !== userId);
 
-    const Car = require('../models/car'); // make sure this is imported at the top
     const viewerCar = await Car.findOne({ owner: viewer._id });
     const otherCar = await Car.findOne({ owner: otherUser._id });
 
