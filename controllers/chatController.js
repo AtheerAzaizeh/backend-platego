@@ -61,7 +61,29 @@ exports.getUserChats = async (req, res) => {
       return (latestMap[b._id.toString()] || 0) - (latestMap[a._id.toString()] || 0)
     })
 
-    res.json(chats)
+   const response = await Promise.all(chats.map(async (chat) => {
+  const otherUser = chat.participants.find(p => p._id.toString() !== userId);
+  const otherCar = await Car.findOne({ owner: otherUser._id });
+
+  return {
+    _id: chat._id,
+    lastMessageTime: latestMap[chat._id.toString()] || null,
+
+    otherUser: {
+      firstName: otherUser?.firstName,
+      lastName: otherUser?.lastName,
+      img: otherUser?.img
+    },
+
+    otherCar: {
+      plate: otherCar?.plate || "Unknown Plate",
+      image: otherCar?.image || "images/default-car.jpg"
+    }
+  };
+}));
+
+res.json(response);
+
   } catch (err) {
     console.error("Get chats error:", err)
     res.status(500).json({ error: "Failed to fetch chats" })
