@@ -87,8 +87,10 @@ exports.getChatById = async (req, res) => {
         image: chat.car.image,
       },
       participants: chat.participants.map((p) => ({
-        id: p._id,
-        name: `${p.firstName} ${p.lastName}`,
+        id: p._id.toString(), // Ensure ID is string
+        name: `${p.firstName} ${p.lastName}`.trim(),
+        firstName: p.firstName,
+        lastName: p.lastName,
         img: p.img,
       })),
     })
