@@ -1,57 +1,76 @@
 const Chat = require('../models/chat');
+const Car = require('../models/car');
 const Message = require('../models/message');
 const User = require('../models/user');
 
-exports.getMyChats = async (req, res) => {
+exports.createOrGetChat = async (req, res) => {
   try {
+    const { plate } = req.body;
     const userId = req.user.id;
-    const chats = await Chat.find({ participant: userId })
-      .populate('participant', 'firstName lastName img')
-      .sort({ lastMessageTime: -1 });
 
-    res.status(200).json({ chats });
+const car = await Car.findOne({ plate: plate.trim() }).populate('owner');
+
+    if (!car) return res.status(404).json({ error: 'Car not found' });
+
+    if (car.owner.toString() === userId)
+      return res.status(400).json({ error: "You can't message yourself" });
+
+    let chat = await Chat.findOne({
+      car: car._id,
+      participants: { $all: [userId, car.owner], $size: 2 }
+    });
+
+    if (!chat) {
+      chat = await Chat.create({
+        car: car._id,
+        participants: [userId, car.owner]
+      });
+    }
+
+    res.json({ chatId: chat._id });
   } catch (err) {
-    console.error('Get chats error:', err);
-    res.status(500).json({ message: 'Server error while fetching chats' });
+    console.error('Error in createOrGetChat:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-// POST /api/chat/create-or-get
-exports.createOrGetChat = async (req, res) => {
-    let { userIDs, carID } = req.body;
+exports.getChatMessages = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const messages = await Message.find({ chat: chatId })
+      .populate('sender', 'firstName lastName img')
+      .sort({ date: 1 });
 
-    if (!Array.isArray(userIDs)) {
-        return res.status(400).json({ message: 'userIDs must be an array' });
-    }
+    res.json({ messages });
+  } catch (err) {
+    console.error('Error in getChatMessages:', err);
+    res.status(500).json({ error: 'Failed to load messages' });
+  }
+};
 
-    userIDs = userIDs.filter(id => id && typeof id === 'string');
-    const uniqueIDs = [...new Set(userIDs)];
+exports.sendMessage = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { message } = req.body;
+    const senderId = req.user.id;
 
-    if (uniqueIDs.length !== 2 || !carID) {
-        return res.status(400).json({ message: 'Exactly 2 valid user IDs and carID are required' });
-    }
+    const newMsg = await Message.create({
+      message,
+      chat: chatId,
+      sender: senderId,
+      date: new Date()
+    });
 
-    try {
-        const existingChat = await Chat.findOne({
-            participants: { $all: uniqueIDs },
-            car: carID
-        });
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: message,
+      lastMessageTime: new Date()
+    });
 
-        if (existingChat) {
-            return res.status(200).json({ chatID: existingChat._id });
-        }
+    const populatedMsg = await newMsg.populate('sender', 'firstName lastName img');
 
-        const newChat = new Chat({
-            participants: uniqueIDs,
-            car: carID,
-            lastMessage: '',
-            lastMessageTime: new Date()
-        });
-
-        await newChat.save();
-        return res.status(201).json({ chatID: newChat._id });
-    } catch (err) {
-        console.error('Error in createOrGetChat:', err);
-        return res.status(500).json({ message: 'Internal server error' });
-    }
+    res.status(201).json(populatedMsg);
+  } catch (err) {
+    console.error('Error in sendMessage:', err);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
 };
