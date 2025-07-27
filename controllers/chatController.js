@@ -1,103 +1,99 @@
-const Chat = require('../models/chat');
-const Car = require('../models/car');
-const User = require('../models/user');
-const Message = require('../models/message');
+const Chat = require("../models/chat")
+const Car = require("../models/car")
+const User = require("../models/user")
+const Message = require("../models/message")
 
 exports.createOrGetChat = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { plate } = req.body;
+    const userId = req.user.id
+    const { plate } = req.body
 
-    if (!plate) return res.status(400).json({ error: 'Plate is required' });
+    if (!plate) return res.status(400).json({ error: "Plate is required" })
 
-    const car = await Car.findOne({ plate });
-    if (!car) return res.status(404).json({ error: 'Car not found' });
+    const car = await Car.findOne({ plate }).populate("owner")
+    if (!car) return res.status(404).json({ error: "Car not found" })
 
-    if (car.owner.toString() === userId)
-      return res.status(400).json({ error: "You can't message yourself" });
+    if (car.owner.toString() === userId) {
+      return res.status(400).json({ error: "You can't message yourself" })
+    }
 
     let chat = await Chat.findOne({
       car: car._id,
-      participants: { $all: [userId, car.owner], $size: 2 }
-    });
+      participants: { $all: [userId, car.owner._id], $size: 2 },
+    })
 
     if (!chat) {
       chat = await Chat.create({
         car: car._id,
-        participants: [userId, car.owner]
-      });
+        participants: [userId, car.owner._id],
+      })
     }
 
-    res.json({ chatId: chat._id });
+    res.json({ chatId: chat._id })
   } catch (err) {
-    console.error('Error in createOrGetChat:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Error in createOrGetChat:", err)
+    res.status(500).json({ error: "Internal server error" })
   }
-};
-
+}
 
 exports.getUserChats = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id
 
-    const chats = await Chat.find({ participants: userId })
-      .populate('car')
-      .populate('participants')
-      .lean();
+    const chats = await Chat.find({ participants: userId }).populate("car").populate("participants").lean()
 
-    const chatIds = chats.map(chat => chat._id);
+    const chatIds = chats.map((chat) => chat._id)
     const latestMessages = await Message.aggregate([
       { $match: { chat: { $in: chatIds } } },
       { $sort: { timestamp: -1 } },
       {
         $group: {
-          _id: '$chat',
-          latest: { $first: '$$ROOT' }
-        }
-      }
-    ]);
+          _id: "$chat",
+          latest: { $first: "$$ROOT" },
+        },
+      },
+    ])
 
-    const latestMap = {};
-    latestMessages.forEach(m => latestMap[m._id.toString()] = m.latest.timestamp);
+    const latestMap = {}
+    latestMessages.forEach((m) => (latestMap[m._id.toString()] = m.latest.timestamp))
 
     chats.sort((a, b) => {
-      return (latestMap[b._id.toString()] || 0) - (latestMap[a._id.toString()] || 0);
-    });
+      return (latestMap[b._id.toString()] || 0) - (latestMap[a._id.toString()] || 0)
+    })
 
-    res.json(chats);
+    res.json(chats)
   } catch (err) {
-    console.error('Get chats error:', err);
-    res.status(500).json({ error: 'Failed to fetch chats' });
+    console.error("Get chats error:", err)
+    res.status(500).json({ error: "Failed to fetch chats" })
   }
-};
-
+}
 
 exports.getChatById = async (req, res) => {
   try {
-    const { chatId } = req.params;
-    const userId = req.user.id;
+    const { chatId } = req.params
+    const userId = req.user.id
 
-    const chat = await Chat.findById(chatId).populate('participants').populate('car');
-    if (!chat) return res.status(404).json({ error: "Chat not found" });
+    const chat = await Chat.findById(chatId).populate("participants").populate("car")
+    if (!chat) return res.status(404).json({ error: "Chat not found" })
 
-    if (!chat.participants.some(p => p._id.toString() === userId)) {
-      return res.status(403).json({ error: "Access denied" });
+    if (!chat.participants.some((p) => p._id.toString() === userId)) {
+      return res.status(403).json({ error: "Access denied" })
     }
 
     res.json({
       chatId: chat._id,
       car: {
         plate: chat.car.plate,
-        image: chat.car.image
+        image: chat.car.image,
       },
-      participants: chat.participants.map(p => ({
+      participants: chat.participants.map((p) => ({
         id: p._id,
         name: `${p.firstName} ${p.lastName}`,
-        img: p.img
-      }))
-    });
+        img: p.img,
+      })),
+    })
   } catch (err) {
-    console.error("getChatById error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("getChatById error:", err)
+    res.status(500).json({ error: "Internal server error" })
   }
-};
+}
