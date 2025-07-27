@@ -1,23 +1,38 @@
 const Message = require('../models/message');
+const Notification = require('../models/notification');
+const Chat = require('../models/chat');
 
 exports.sendMessage = async (req, res) => {
   try {
     const { chatId, text } = req.body;
-    const sender = req.user.id;
+    const senderId = req.user.id;
 
-    if (!chatId || !text) {
-      return res.status(400).json({ error: 'chatId and text are required' });
-    }
+    const chat = await Chat.findById(chatId).populate('participants');
+    if (!chat) return res.status(404).json({ error: 'Chat not found' });
 
-    const message = await Message.create({ chat: chatId, sender, text });
-    const populated = await message.populate('sender', 'firstName lastName img');
+    const receiver = chat.participants.find(p => p._id.toString() !== senderId);
+    if (!receiver) return res.status(400).json({ error: 'Receiver not found' });
 
-    req.io.to(chatId).emit('newMessage', populated); // Broadcast to room
+    const message = await Message.create({
+      chat: chatId,
+      sender: senderId,
+      text,
+    });
 
-    res.status(201).json(populated);
+    // Save notification for receiver
+    await Notification.create({
+      user: receiver._id,
+      message: `New message from ${req.user.firstName || 'user'}: "${text.slice(0, 30)}..."`,
+      chatId,
+    });
+
+    // Send real-time via socket.io
+    req.io.to(chatId).emit('newMessage', await message.populate('sender'));
+
+    res.json(message);
   } catch (err) {
-    console.error('sendMessage error:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Send message error:', err);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 };
 

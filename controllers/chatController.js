@@ -1,6 +1,7 @@
 const Chat = require('../models/chat');
 const Car = require('../models/car');
 const User = require('../models/user');
+const Message = require('../models/message');
 
 exports.createOrGetChat = async (req, res) => {
   try {
@@ -41,24 +42,31 @@ exports.getUserChats = async (req, res) => {
 
     const chats = await Chat.find({ participants: userId })
       .populate('car')
-      .populate('participants', 'firstName lastName img');
+      .populate('participants')
+      .lean();
 
-    const formatted = chats.map(chat => {
-      const other = chat.participants.find(p => p._id.toString() !== userId);
-      return {
-        chatId: chat._id,
-        plate: chat.car.plate,
-        carImage: chat.car.image || null,
-        user: {
-          name: `${other.firstName} ${other.lastName}`,
-          img: other.img || null,
+    const chatIds = chats.map(chat => chat._id);
+    const latestMessages = await Message.aggregate([
+      { $match: { chat: { $in: chatIds } } },
+      { $sort: { timestamp: -1 } },
+      {
+        $group: {
+          _id: '$chat',
+          latest: { $first: '$$ROOT' }
         }
-      };
+      }
+    ]);
+
+    const latestMap = {};
+    latestMessages.forEach(m => latestMap[m._id.toString()] = m.latest.timestamp);
+
+    chats.sort((a, b) => {
+      return (latestMap[b._id.toString()] || 0) - (latestMap[a._id.toString()] || 0);
     });
 
-    res.json({ chats: formatted });
+    res.json(chats);
   } catch (err) {
-    console.error('Error fetching user chats:', err);
+    console.error('Get chats error:', err);
     res.status(500).json({ error: 'Failed to fetch chats' });
   }
 };

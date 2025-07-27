@@ -8,7 +8,8 @@ const notificationSchema = new mongoose.Schema({
     carImage: { type: String },
     isRead: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    chatId: { type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }
 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

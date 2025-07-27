@@ -2,16 +2,13 @@ const Notification = require('../models/notification');
 const Car = require('../models/car');
 const RescueRequest = require('../models/RescueRequest');
 
-exports.getMyNotifications = async (req, res) => {
+exports.getNotifications = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const notifications = await Notification.find({ user: userId })
-      .sort({ createdAt: -1 })
-
-    res.status(200).json({ notifications });
+    const notifications = await Notification.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json(notifications);
   } catch (err) {
-    console.error('Get notifications error:', err);
-    res.status(500).json({ message: 'Server error while fetching notifications' });
+    console.error('Fetch notifications error:', err);
+    res.status(500).json({ error: 'Failed to get notifications' });
   }
 };
 
