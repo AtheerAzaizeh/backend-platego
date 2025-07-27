@@ -5,6 +5,7 @@ const Chat = require("../models/chat");
 exports.sendMessage = async (req, res) => {
   try {
     const { chatId, text, image } = req.body;
+console.log("📨 Incoming body:", { chatId, text, imageLength: image?.length });
     const senderId = req.user.id;
 
     const chat = await Chat.findById(chatId).populate("participants");
