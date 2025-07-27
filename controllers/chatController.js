@@ -1,15 +1,15 @@
 const Chat = require('../models/chat');
 const Car = require('../models/car');
-const Message = require('../models/message');
 const User = require('../models/user');
 
 exports.createOrGetChat = async (req, res) => {
   try {
-    const { plate } = req.body;
     const userId = req.user.id;
+    const { plate } = req.body;
 
-const car = await Car.findOne({ plate: plate.trim() }).populate('owner');
+    if (!plate) return res.status(400).json({ error: 'Plate is required' });
 
+    const car = await Car.findOne({ plate });
     if (!car) return res.status(404).json({ error: 'Car not found' });
 
     if (car.owner.toString() === userId)
@@ -34,43 +34,62 @@ const car = await Car.findOne({ plate: plate.trim() }).populate('owner');
   }
 };
 
-exports.getChatMessages = async (req, res) => {
-  try {
-    const { chatId } = req.params;
-    const messages = await Message.find({ chat: chatId })
-      .populate('sender', 'firstName lastName img')
-      .sort({ date: 1 });
 
-    res.json({ messages });
+exports.getUserChats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const chats = await Chat.find({ participants: userId })
+      .populate('car')
+      .populate('participants', 'firstName lastName img');
+
+    const formatted = chats.map(chat => {
+      const other = chat.participants.find(p => p._id.toString() !== userId);
+      return {
+        chatId: chat._id,
+        plate: chat.car.plate,
+        carImage: chat.car.image || null,
+        user: {
+          name: `${other.firstName} ${other.lastName}`,
+          img: other.img || null,
+        }
+      };
+    });
+
+    res.json({ chats: formatted });
   } catch (err) {
-    console.error('Error in getChatMessages:', err);
-    res.status(500).json({ error: 'Failed to load messages' });
+    console.error('Error fetching user chats:', err);
+    res.status(500).json({ error: 'Failed to fetch chats' });
   }
 };
 
-exports.sendMessage = async (req, res) => {
+
+exports.getChatById = async (req, res) => {
   try {
     const { chatId } = req.params;
-    const { message } = req.body;
-    const senderId = req.user.id;
+    const userId = req.user.id;
 
-    const newMsg = await Message.create({
-      message,
-      chat: chatId,
-      sender: senderId,
-      date: new Date()
+    const chat = await Chat.findById(chatId).populate('participants').populate('car');
+    if (!chat) return res.status(404).json({ error: "Chat not found" });
+
+    if (!chat.participants.some(p => p._id.toString() === userId)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    res.json({
+      chatId: chat._id,
+      car: {
+        plate: chat.car.plate,
+        image: chat.car.image
+      },
+      participants: chat.participants.map(p => ({
+        id: p._id,
+        name: `${p.firstName} ${p.lastName}`,
+        img: p.img
+      }))
     });
-
-    await Chat.findByIdAndUpdate(chatId, {
-      lastMessage: message,
-      lastMessageTime: new Date()
-    });
-
-    const populatedMsg = await newMsg.populate('sender', 'firstName lastName img');
-
-    res.status(201).json(populatedMsg);
   } catch (err) {
-    console.error('Error in sendMessage:', err);
-    res.status(500).json({ error: 'Failed to send message' });
+    console.error("getChatById error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

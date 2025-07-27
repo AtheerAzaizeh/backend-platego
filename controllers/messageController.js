@@ -1,44 +1,35 @@
 const Message = require('../models/message');
-const Chat = require('../models/chat');
 
-exports.getMessagesByChatId = async (req, res) => {
+exports.sendMessage = async (req, res) => {
+  try {
+    const { chatId, text } = req.body;
+    const sender = req.user.id;
+
+    if (!chatId || !text) {
+      return res.status(400).json({ error: 'chatId and text are required' });
+    }
+
+    const message = await Message.create({ chat: chatId, sender, text });
+    const populated = await message.populate('sender', 'firstName lastName img');
+
+    req.io.to(chatId).emit('newMessage', populated); // Broadcast to room
+
+    res.status(201).json(populated);
+  } catch (err) {
+    console.error('sendMessage error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.getMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
     const messages = await Message.find({ chat: chatId })
       .populate('sender', 'firstName lastName img')
-      .sort({ date: 1 });
-
-    res.status(200).json({ messages });
+      .sort({ timestamp: 1 });
+    res.json(messages);
   } catch (err) {
-    console.error('Get messages error:', err);
-    res.status(500).json({ message: 'Server error while fetching messages' });
-  }
-};
-
-exports.sendMessage = async (req, res) => {
-  try {
-    const { chatId } = req.params;
-    const { message } = req.body;
-    const senderId = req.user.id;
-
-    const newMessage = new Message({
-      chat: chatId,
-      message,
-      sender: senderId,
-      date: new Date()
-    });
-
-    await newMessage.save();
-
-    await Chat.findByIdAndUpdate(chatId, {
-      lastMessage: message,
-      lastMessageTime: new Date()
-    });
-
-    res.status(201).json({ message: 'Message sent', data: newMessage });
-
-  } catch (err) {
-    console.error('Send message error:', err);
-    res.status(500).json({ message: 'Server error while sending message' });
+    console.error('getMessages error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 };

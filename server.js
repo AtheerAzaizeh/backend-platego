@@ -6,8 +6,6 @@ const mongoose = require('mongoose');
 const http = require('http');
 const socketio = require('socket.io');
 
-
-
 // Load .env
 dotenv.config();
 
@@ -18,7 +16,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server, {
     cors: {
-        origin: '*'
+        origin: '*',
+        methods: ['GET', 'POST']
     }
 });
 // Middleware
@@ -67,6 +66,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);
     });
+
+      socket.on('joinChat', (chatId) => {
+    socket.join(chatId);
+    console.log(`User joined chat ${chatId}`);
+  });
+
 });
 
 const PORT = process.env.PORT || 3000;
