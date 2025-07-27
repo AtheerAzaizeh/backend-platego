@@ -73,13 +73,10 @@ exports.getNotifications = async (req, res) => {
 // Mark a notification as read
 exports.markAsRead = async (req, res) => {
   try {
-    const notificationId = req.params.id;
-
-    await Notification.findByIdAndUpdate(notificationId, { isRead: true });
-    res.status(200).json({ message: 'Notification marked as read' });
+    await Notification.updateMany({ user: req.user.id, isRead: false }, { isRead: true });
+    res.json({ success: true });
   } catch (err) {
-    console.error('Mark notification error:', err);
-    res.status(500).json({ message: 'Server error while marking notification' });
+    res.status(500).json({ error: 'Failed to mark notifications' });
   }
 };
 

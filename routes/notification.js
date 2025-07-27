@@ -7,6 +7,6 @@ router.get('/my', verifyToken, notificationController.getNotifications);
 router.delete('/:id', verifyToken, notificationController.deleteNotification);
 router.post('/my', verifyToken, notificationController.saveNotification);
 router.get('/', verifyToken, notificationController.getNotifications);
-router.put('/:id/read', verifyToken, notificationController.markAsRead);
+router.put('/mark-read', verifyToken, notificationController.markAsRead);
 
 module.exports = router;
