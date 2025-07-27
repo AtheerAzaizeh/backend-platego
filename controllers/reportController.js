@@ -3,6 +3,55 @@ const Car = require('../models/car');
 const Notification = require('../models/notification');
 const Chat = require('../models/chat');
 const Message = require('../models/message');
+const fetch = (...args) => import('node-fetch').then(mod => mod.default(...args));
+
+
+async function getCoordinates({ city, street, number }) {
+  const address = encodeURIComponent(`${number} ${street}, ${city}, Israel`);
+  const url = `https://nominatim.openstreetmap.org/search?q=${address}&format=json&limit=1`;
+
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Plate&Go' }
+  });
+  const data = await res.json();
+
+  if (data.length > 0) {
+    return {
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon)
+    };
+  }
+
+  return null; // not found
+}
+
+exports.createReportWithCoordinates = async (req, res) => {
+  try {
+    const { plate, reason, reportType, location, image } = req.body;
+    const sender = req.user.id;
+
+    if (!plate || !reason || !reportType || !location?.city || !location?.street || !location?.number)
+      return res.status(400).json({ error: 'Missing required fields' });
+
+    const coords = await getCoordinates(location);
+
+    const report = new Report({
+      plate,
+      reason,
+      reportType,
+      image,
+      location,
+      coordinates: coords || undefined,
+      sender
+    });
+
+    await report.save();
+    res.status(201).json({ message: 'Report created successfully', report });
+  } catch (err) {
+    console.error('Error creating report:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
 
 exports.getCarByPlate = async (req, res) => {
   try {
@@ -19,84 +68,99 @@ exports.getCarByPlate = async (req, res) => {
   }
 };
 
-exports.makeReport = async (req, res) => {
-  try {
-    const {
-      plate, reason, reportType,
-      location, image
-    } = req.body;
-
-    const senderId = req.user.id;
-
-    const newReport = new Report({
-      plate,
-      reason,
-      reportType,
-      location,
-      image,
-      sender: senderId
-    });
-
-    const savedReport = await newReport.save();
-
-    const car = await Car.findOne({ plate });
-    if (!car || !car.owner) {
-      return res.status(404).json({ message: 'Car owner not found' });
-    }
-
-    const receiverId = car.owner;
-
-    if (receiverId.toString() === senderId) {
-      return res.status(201).json({ message: 'Report submitted on your own car', report: savedReport });
-    }
-
-    const notify = new Notification({
-      type: 'report',
-      message: 'You have received a new report on your car',
-      user: receiverId,
-      linkedTo: savedReport._id,
-      linkedModel: 'Report'
-    });
-    await notify.save();
-
-    let chat = await Chat.findOne({
-      participant: { $all: [senderId, receiverId] }
-    });
-
-    if (!chat) {
-      chat = new Chat({
-        participant: [senderId, receiverId],
-        car: car._id,
-        lastMessage: 'You have received a report on your car',
-        lastMessageTime: new Date()
-      });
-      await chat.save();
-    }
-
-    const message = new Message({
-      message: `Hey, I just reported your car (${plate}) because: ${reason}`,
-      date: new Date(),
-      chat: chat._id,
-      sender: senderId
-    });
-    await message.save();
-
-    chat.lastMessage = message.message;
-    chat.lastMessageTime = message.date;
-    await chat.save();
-
-    res.status(201).json({
-      message: 'Report submitted and user notified',
-      report: savedReport,
-      notification: notify,
-      chatId: chat._id
-    });
-
-  } catch (err) {
-    console.error('Report error:', err);
-    res.status(500).json({ message: 'Server error while reporting' });
-  }
-};
+//exports.makeReport = async (req, res) => {
+//  try {
+//    const {
+//      plate, reason, reportType,
+//      location, image
+//    } = req.body;
+//
+//    const senderId = req.user.id;
+//
+//        const apiKey = '400d2d81eb784ffeac2632a2082a4615';
+//    const address = `${location.number} ${location.street}, ${location.city}`;
+//    let coordinates = null;
+//
+//    try {
+//      const geoRes = await axios.get(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(address)}&key=${apiKey}`);
+//      if (geoRes.data.results.length > 0) {
+//        const { lat, lng } = geoRes.data.results[0].geometry;
+//        coordinates = { lat, lng };
+//      }
+//    } catch (geoErr) {
+//      console.error('Geocoding failed:', geoErr.message);
+//    }
+//
+//    const newReport = new Report({
+//      plate,
+//      reason,
+//      reportType,
+//      location,
+//      image,
+//      sender: senderId,
+//      coordinates
+//    });
+//
+//    const savedReport = await newReport.save();
+//
+//    const car = await Car.findOne({ plate });
+//    if (!car) {
+//      return res.status(404).json({ message: 'Car owner not found' });
+//    }
+//
+//    const receiverId = car.owner;
+//
+//    if (receiverId.toString() === senderId) {
+//      return res.status(201).json({ message: 'Report submitted on your own car', report: savedReport });
+//    }
+//
+//    const notify = new Notification({
+//      type: 'report',
+//      message: 'You have received a new report on your car',
+//      user: receiverId,
+//      linkedTo: savedReport._id,
+//      linkedModel: 'Report'
+//    });
+//    await notify.save();
+//
+//    let chat = await Chat.findOne({
+//      participant: { $all: [senderId, receiverId] }
+//    });
+//
+//    if (!chat) {
+//      chat = new Chat({
+//        participant: [senderId, receiverId],
+//        car: car._id,
+//        lastMessage: 'You have received a report on your car',
+//        lastMessageTime: new Date()
+//      });
+//      await chat.save();
+//    }
+//
+//    const message = new Message({
+//      message: `Hey, I just reported your car (${plate}) because: ${reason}`,
+//      date: new Date(),
+//      chat: chat._id,
+//      sender: senderId
+//    });
+//    await message.save();
+//
+//    chat.lastMessage = message.message;
+//    chat.lastMessageTime = message.date;
+//    await chat.save();
+//
+//    res.status(201).json({
+//      message: 'Report submitted and user notified',
+//      report: savedReport,
+//      notification: notify,
+//      chatId: chat._id
+//    });
+//
+//  } catch (err) {
+//    console.error('Report error:', err);
+//    res.status(500).json({ message: 'Server error while reporting' });
+//  }
+//};
 
 exports.getMyReports = async (req, res) => {
   try {

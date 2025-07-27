@@ -12,7 +12,11 @@ const reportSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   image: String,
   status: { type: String, default: 'open' },
-  sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  coordinates: {
+  lat: Number,
+  lng: Number
+}
 });
 
 module.exports = mongoose.model('Report', reportSchema);
