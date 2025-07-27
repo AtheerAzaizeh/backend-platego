@@ -70,32 +70,49 @@ exports.getUserChats = async (req, res) => {
 
 exports.getChatById = async (req, res) => {
   try {
-    const { chatId } = req.params
-    const userId = req.user.id
+    const { chatId } = req.params;
+    const userId = req.user.id;
 
-    const chat = await Chat.findById(chatId).populate("participants").populate("car")
-    if (!chat) return res.status(404).json({ error: "Chat not found" })
+    const chat = await Chat.findById(chatId)
+      .populate("participants", "firstName lastName img")
+      .populate("car");
+
+    if (!chat) return res.status(404).json({ error: "Chat not found" });
 
     if (!chat.participants.some((p) => p._id.toString() === userId)) {
-      return res.status(403).json({ error: "Access denied" })
+      return res.status(403).json({ error: "Access denied" });
     }
+
+    const viewer = chat.participants.find(p => p._id.toString() === userId);
+    const otherUser = chat.participants.find(p => p._id.toString() !== userId);
+
+    const Car = require('../models/car'); // make sure this is imported at the top
+    const viewerCar = await Car.findOne({ owner: viewer._id });
+    const otherCar = await Car.findOne({ owner: otherUser._id });
 
     res.json({
       chatId: chat._id,
-      car: {
-        plate: chat.car.plate,
-        image: chat.car.image,
-      },
       participants: chat.participants.map((p) => ({
-        id: p._id.toString(), // Ensure ID is string
+        id: p._id.toString(),
         name: `${p.firstName} ${p.lastName}`.trim(),
         firstName: p.firstName,
         lastName: p.lastName,
         img: p.img,
       })),
-    })
+      car: {
+        viewerCar: viewerCar ? {
+          plate: viewerCar.plate,
+          image: viewerCar.image
+        } : null,
+        otherCar: otherCar ? {
+          plate: otherCar.plate,
+          image: otherCar.image
+        } : null
+      }
+    });
+
   } catch (err) {
-    console.error("getChatById error:", err)
-    res.status(500).json({ error: "Internal server error" })
+    console.error("getChatById error:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
-}
+};
