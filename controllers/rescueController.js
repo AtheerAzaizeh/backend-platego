@@ -18,10 +18,15 @@ exports.createRescueRequest = async (req, res) => {
 
         const volunteers = await User.find({ role: 'volunteer' });
 
-        const notifications = volunteers.map(vol => ({
-            user: vol._id,
-            message: `New rescue request near ${location}`
-        }));
+        const submitter = await User.findById(userId);
+
+const notifications = volunteers.map(vol => ({
+  user: vol._id,
+  message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
+  sender: userId // optional if your Notification schema supports it
+}));
+
+       
 
         await Notification.insertMany(notifications);
 
