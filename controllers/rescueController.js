@@ -31,7 +31,17 @@ const notifications = volunteers.map(vol => ({
 
        
 
-        await Notification.insertMany(notifications);
+      await Promise.all(volunteers.map(vol => {
+  return Notification.create({
+    user: vol._id,
+    message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
+    sender: userId,
+    location,
+    reason,
+    rescueId: request._id
+  });
+}));
+
 
         req.io.to('volunteers').emit('newRescueRequest', {
             message: `New rescue request: ${reason}`,
