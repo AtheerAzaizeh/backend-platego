@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user'); // Mongoose model
-
+const asyncHandler = require("express-async-handler")
 // רישום משתמש חדש
 exports.registerUser = async (req, res) => {
     const { phoneNumber, firstName, lastName, email, password, address, img, cars = [] } = req.body;
@@ -90,3 +90,21 @@ exports.toggleAvailability = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.getMe = asyncHandler(async (req, res) => {
+  // req.user is set by the protect middleware from authMiddleware
+  const user = await User.findById(req.user.id).select("-password")
+
+  if (user) {
+    res.json({
+      _id: user._id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: user.role,
+      profilePicture: user.img,
+    })
+  } else {
+    res.status(404)
+    throw new Error("User not found")
+  }
+})
