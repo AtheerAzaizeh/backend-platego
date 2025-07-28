@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   img: String,
   volunteerStatus: String,
   notify: Boolean,
+  available: { type: Boolean, default: false }
+
 });
 
 module.exports = mongoose.model('User', userSchema);
