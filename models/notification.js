@@ -9,7 +9,10 @@ const notificationSchema = new mongoose.Schema({
     isRead: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    chatId: { type: mongoose.Schema.Types.ObjectId, ref: 'Chat' }
+    chatId: { type: mongoose.Schema.Types.ObjectId, ref: 'Chat' },
+    location: { type: String },
+    reason: { type: String }
+
 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

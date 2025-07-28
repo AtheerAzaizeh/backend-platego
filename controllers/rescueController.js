@@ -24,8 +24,8 @@ const notifications = volunteers.map(vol => ({
   user: vol._id,
   message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
   sender: userId ,
-   location,
-  reason
+  location: location,
+  reason: reason
 }));
 
        
