@@ -7,5 +7,6 @@ router.post('/create', verifyToken, rescueController.createRescueRequest);
 router.get('/my', verifyToken, rescueController.getMyRescueRequests);
 router.delete('/:id', verifyToken, rescueController.deleteRescueRequest);
 router.get('/all', verifyToken, rescueController.getAllRescueRequests);
+router.put('/accept/:id', verifyToken, rescueController.acceptRescueRequest);
 
 module.exports = router;

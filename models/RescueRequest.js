@@ -4,8 +4,20 @@ const rescueSchema = new mongoose.Schema({
   location: String,
   time: String,
   reason: String,
-  status: { type: String, default: 'pending' }, // pending | accepted | done | canceled
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-});
+  user: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User' 
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'accepted', 'completed', 'cancelled'],
+    default: 'pending'
+  },
+  acceptedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  }
+}, { timestamps: true });
 
 module.exports = mongoose.model('RescueRequest', rescueSchema);

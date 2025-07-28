@@ -25,7 +25,8 @@ const notifications = volunteers.map(vol => ({
   message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
   sender: userId ,
   location: location,
-  reason: reason
+  reason: reason,
+  rescueId: request._id
 }));
 
        
@@ -91,5 +92,38 @@ exports.getAllRescueRequests = async (req, res) => {
   } catch (err) {
     console.error('Get all rescues error:', err);
     res.status(500).json({ message: 'Server error while fetching all rescue requests' });
+  }
+};
+
+exports.acceptRescueRequest = async (req, res) => {
+  try {
+    const rescueId = req.params.id;
+    const volunteerId = req.user.id;
+
+    const rescue = await RescueRequest.findById(rescueId);
+
+    if (!rescue) {
+      return res.status(404).json({ message: 'Rescue request not found' });
+    }
+
+    if (rescue.status !== 'pending') {
+      return res.status(400).json({ message: 'This rescue request is already taken' });
+    }
+
+    rescue.status = 'accepted';
+    rescue.acceptedBy = volunteerId;
+    await rescue.save();
+
+    // Optional: notify requester via socket
+    req.io.to(`user_${rescue.user}`).emit('rescueAccepted', {
+      rescueId: rescue._id,
+      acceptedBy: volunteerId
+    });
+
+    res.status(200).json({ message: 'Rescue accepted successfully', rescue });
+
+  } catch (err) {
+    console.error('Accept rescue error:', err);
+    res.status(500).json({ message: 'Server error while accepting rescue' });
   }
 };
