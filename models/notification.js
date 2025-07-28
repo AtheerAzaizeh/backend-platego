@@ -16,7 +16,9 @@ const notificationSchema = new mongoose.Schema({
   type: mongoose.Schema.Types.ObjectId,
   ref: 'RescueRequest',
   required: false
-}
+},
+status: { type: String, enum: ['pending', 'accepted', 'completed', 'cancelled'], default: 'pending' }
+
 
 
 });

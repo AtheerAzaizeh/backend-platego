@@ -38,7 +38,8 @@ const notifications = volunteers.map(vol => ({
     sender: userId,
     location,
     reason,
-    rescueId: request._id
+    rescueId: request._id,
+    status: request.status 
   });
 }));
 
