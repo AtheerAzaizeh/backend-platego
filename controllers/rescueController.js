@@ -23,7 +23,9 @@ exports.createRescueRequest = async (req, res) => {
 const notifications = volunteers.map(vol => ({
   user: vol._id,
   message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
-  sender: userId // optional if your Notification schema supports it
+  sender: userId ,
+   location,
+  reason
 }));
 
        
