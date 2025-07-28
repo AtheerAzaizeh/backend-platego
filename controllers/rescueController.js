@@ -100,21 +100,28 @@ exports.acceptRescueRequest = async (req, res) => {
     const rescueId = req.params.id;
     const volunteerId = req.user.id;
 
-    const rescue = await RescueRequest.findById(rescueId);
+    console.log("🔧 Accept request called with:");
+    console.log("→ rescueId:", rescueId);
+    console.log("→ volunteerId:", volunteerId);
+console.log("🚨 Notification saving rescueId:", rescue?._id);
 
+    const rescue = await RescueRequest.findById(rescueId);
     if (!rescue) {
+      console.log("❌ Rescue not found");
       return res.status(404).json({ message: 'Rescue request not found' });
     }
 
     if (rescue.status !== 'pending') {
+      console.log("⚠️ Already accepted");
       return res.status(400).json({ message: 'This rescue request is already taken' });
     }
 
     rescue.status = 'accepted';
     rescue.acceptedBy = volunteerId;
-    await rescue.save();
+    await rescue.save(); // 🔧 This line might fail if acceptedBy is not a valid ObjectId
 
-    // Optional: notify requester via socket
+    console.log("✅ Rescue accepted successfully");
+
     req.io.to(`user_${rescue.user}`).emit('rescueAccepted', {
       rescueId: rescue._id,
       acceptedBy: volunteerId
@@ -123,7 +130,7 @@ exports.acceptRescueRequest = async (req, res) => {
     res.status(200).json({ message: 'Rescue accepted successfully', rescue });
 
   } catch (err) {
-    console.error('Accept rescue error:', err);
+    console.error('❗ Accept rescue error:', err); // THIS will now show the real reason
     res.status(500).json({ message: 'Server error while accepting rescue' });
   }
 };
