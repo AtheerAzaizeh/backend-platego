@@ -1,7 +1,9 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
 const User = require('../models/user'); // Mongoose model
 const asyncHandler = require("express-async-handler")
+
 // רישום משתמש חדש
 exports.registerUser = async (req, res) => {
     const { phoneNumber, firstName, lastName, email, password, address, img, cars = [] } = req.body;
