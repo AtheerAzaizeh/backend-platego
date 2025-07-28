@@ -42,7 +42,8 @@ exports.saveNotification = async (req, res) => {
       message: `New rescue request: ${rescue?.reason || 'Unknown'}`,
       carPlate: car?.plate || 'Unknown',
       reason: rescue?.reason || 'N/A',
-      carImage: car?.image || 'images/default-car.png'
+      carImage: car?.image || 'images/default-car.png',
+      rescueId: rescue?._id || null
     });
 
     await newNotification.save();
