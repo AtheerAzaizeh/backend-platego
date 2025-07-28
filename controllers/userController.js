@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/user'); // Mongoose model
+const User = require('../models/user');
 
 // רישום משתמש חדש
 exports.registerUser = async (req, res) => {
