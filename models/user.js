@@ -10,7 +10,12 @@ const userSchema = new mongoose.Schema({
   img: String,
   volunteerStatus: String,
   notify: Boolean,
-  available: { type: Boolean, default: false }
+  available: { type: Boolean, default: false },
+  role: {
+  type: String,
+  enum: ['user', 'volunteer', 'admin'],
+  default: 'user'
+}
 
 });
 
