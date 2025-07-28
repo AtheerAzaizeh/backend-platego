@@ -113,9 +113,10 @@ exports.acceptRescueRequest = async (req, res) => {
     console.log("🔧 Accept request called with:");
     console.log("→ rescueId:", rescueId);
     console.log("→ volunteerId:", volunteerId);
-console.log("🚨 Notification saving rescueId:", rescue?._id);
+
 
     const rescue = await RescueRequest.findById(rescueId);
+    console.log("🚨 Notification saving rescueId:", rescue?._id);
     if (!rescue) {
       console.log("❌ Rescue not found");
       return res.status(404).json({ message: 'Rescue request not found' });
