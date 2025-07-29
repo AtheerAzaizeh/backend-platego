@@ -28,32 +28,88 @@ async function getCoordinates({ city, street, number }) {
 exports.createReportWithCoordinates = async (req, res) => {
   try {
     const { plate, reason, reportType, location } = req.body;
-    const sender = req.user.id;
+    const senderId = req.user.id;
 
     if (!plate || !reason || !reportType || !location?.city || !location?.street || !location?.number) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // ✅ Get coordinates from OpenStreetMap
+    // 1. Get coordinates
     const coords = await getCoordinates(location);
 
-    // ✅ Find the car by plate and get its image
+    // 2. Find car and get image + owner
     const car = await Car.findOne({ plate });
-    const reportImage = car?.image || "images/default-car.jpg";
+    if (!car) {
+      return res.status(404).json({ message: 'Car not found' });
+    }
 
-    // ✅ Create the report
-    const report = new Report({
+    const reportImage = car.image || "images/default-car.jpg";
+    const receiverId = car.owner;
+
+    // 3. Save the report
+    const newReport = new Report({
       plate,
       reason,
       reportType,
       image: reportImage,
       location,
       coordinates: coords || undefined,
-      sender,
+      sender: senderId,
     });
 
-    await report.save();
-    res.status(201).json({ message: 'Report created successfully', report });
+    const savedReport = await newReport.save();
+
+    // 4. If reporting own car, skip chat/notification
+    if (receiverId.toString() === senderId) {
+      return res.status(201).json({ message: 'Report submitted on your own car', report: savedReport });
+    }
+
+    // 5. Create a notification
+    const notify = new Notification({
+      type: 'report',
+      message: 'You have received a new report on your car',
+      user: receiverId,
+      linkedTo: savedReport._id,
+      linkedModel: 'Report',
+    });
+    await notify.save();
+
+    // 6. Create/find chat
+    let chat = await Chat.findOne({
+      participant: { $all: [senderId, receiverId] },
+    });
+
+    if (!chat) {
+      chat = new Chat({
+        participant: [senderId, receiverId],
+        car: car._id,
+        lastMessage: 'You have received a report on your car',
+        lastMessageTime: new Date(),
+      });
+      await chat.save();
+    }
+
+    // 7. Create a message
+    const message = new Message({
+      message: `Hey, I just reported your car (${plate}) because: ${reason}`,
+      date: new Date(),
+      chat: chat._id,
+      sender: senderId,
+    });
+    await message.save();
+
+    // 8. Update chat metadata
+    chat.lastMessage = message.message;
+    chat.lastMessageTime = message.date;
+    await chat.save();
+
+    // ✅ Done
+    res.status(201).json({
+      message: 'Report submitted and user notified',
+      report: savedReport,
+      notification: notify,
+      chatId: chat._id,
+    });
 
   } catch (err) {
     console.error('Error creating report:', err);
