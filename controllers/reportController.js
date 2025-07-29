@@ -25,7 +25,7 @@ async function getCoordinates({ city, street, number }) {
   return null; // not found
 }
 
-exports.createReportWithCoordinates = async (req, res) => {
+exports.createReportWithCoordinates = async (req, res, io) => {
   try {
     const { plate, reason, reportType, location } = req.body;
     const senderId = req.user.id;
@@ -59,22 +59,39 @@ exports.createReportWithCoordinates = async (req, res) => {
 
     const savedReport = await newReport.save();
 
-    // 4. If reporting own car, skip chat/notification
+    // 4. If reporting own car, skip notification
     if (receiverId.toString() === senderId) {
       return res.status(201).json({ message: 'Report submitted on your own car', report: savedReport });
     }
 
-    // 5. Create a notification
+    // 5. Save the notification
     const notify = new Notification({
       type: 'report',
-      message: 'You have received a new report on your car',
+      message: `New report submitted on your car: ${reason}`,
       user: receiverId,
+      sender: senderId,
+      carPlate: plate,
+      reason,
+      carImage: reportImage,
       linkedTo: savedReport._id,
       linkedModel: 'Report',
+      isRead: false,
     });
     await notify.save();
 
-    // 6. Create/find chat
+    // 6. Emit real-time socket notification
+    if (io) {
+      io.to(receiverId.toString()).emit("new-notification", {
+        type: "report",
+        message: `New report submitted on your car: ${reason}`,
+        reportId: savedReport._id,
+        plate,
+        image: reportImage,
+        time: new Date(),
+      });
+    }
+
+    // 7. Chat creation / messaging
     let chat = await Chat.findOne({
       participant: { $all: [senderId, receiverId] },
     });
@@ -89,7 +106,6 @@ exports.createReportWithCoordinates = async (req, res) => {
       await chat.save();
     }
 
-    // 7. Create a message
     const message = new Message({
       message: `Hey, I just reported your car (${plate}) because: ${reason}`,
       date: new Date(),
@@ -98,7 +114,6 @@ exports.createReportWithCoordinates = async (req, res) => {
     });
     await message.save();
 
-    // 8. Update chat metadata
     chat.lastMessage = message.message;
     chat.lastMessageTime = message.date;
     await chat.save();
@@ -116,6 +131,7 @@ exports.createReportWithCoordinates = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 
 exports.getCarByPlate = async (req, res) => {
