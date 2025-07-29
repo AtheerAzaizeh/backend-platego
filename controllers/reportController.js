@@ -27,31 +27,40 @@ async function getCoordinates({ city, street, number }) {
 
 exports.createReportWithCoordinates = async (req, res) => {
   try {
-    const { plate, reason, reportType, location, image } = req.body;
+    const { plate, reason, reportType, location } = req.body;
     const sender = req.user.id;
 
-    if (!plate || !reason || !reportType || !location?.city || !location?.street || !location?.number)
+    if (!plate || !reason || !reportType || !location?.city || !location?.street || !location?.number) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
 
+    // ✅ Get coordinates from OpenStreetMap
     const coords = await getCoordinates(location);
 
+    // ✅ Find the car by plate and get its image
+    const car = await Car.findOne({ plate });
+    const reportImage = car?.image || "images/default-car.jpg";
+
+    // ✅ Create the report
     const report = new Report({
       plate,
       reason,
       reportType,
-      image,
+      image: reportImage,
       location,
       coordinates: coords || undefined,
-      sender
+      sender,
     });
 
     await report.save();
     res.status(201).json({ message: 'Report created successfully', report });
+
   } catch (err) {
     console.error('Error creating report:', err);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 exports.getCarByPlate = async (req, res) => {
   try {
