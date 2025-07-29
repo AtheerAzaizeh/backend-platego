@@ -27,10 +27,14 @@ console.log("📨 Incoming body:", { chatId, text, imageLength: image?.length })
     // Save notification for receiver
     if (text && text.trim()) {
       await Notification.create({
-        user: receiver._id,
-        message: `New message from ${req.user.firstName || "user"}: "${text.slice(0, 30)}..."`,
-        chatId,
-      });
+  type: 'message',
+  user: receiver._id,
+  message: `New message from ${req.user.firstName || "user"}: "${text.slice(0, 30)}..."`,
+  chatId,
+  sender: senderId,
+  isRead: false,
+});
+
     }
 
     // Send real-time message to chat participants

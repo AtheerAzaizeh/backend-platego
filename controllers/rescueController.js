@@ -146,3 +146,16 @@ exports.acceptRescueRequest = async (req, res) => {
     res.status(500).json({ message: 'Server error while accepting rescue' });
   }
 };
+
+
+
+exports.getRescueById = async (req, res) => {
+  try {
+    const rescue = await RescueRequest.findById(req.params.id);
+    if (!rescue) return res.status(404).json({ message: 'Rescue not found' });
+    res.json(rescue);
+  } catch (err) {
+    console.error('Error fetching rescue by ID:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

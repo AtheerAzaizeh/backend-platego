@@ -5,8 +5,9 @@ const rescueController = require('../controllers/rescueController');
 
 router.post('/create', verifyToken, rescueController.createRescueRequest);
 router.get('/my', verifyToken, rescueController.getMyRescueRequests);
-router.delete('/:id', verifyToken, rescueController.deleteRescueRequest);
 router.get('/all', verifyToken, rescueController.getAllRescueRequests);
 router.put('/accept/:id', verifyToken, rescueController.acceptRescueRequest);
+router.delete('/:id', verifyToken, rescueController.deleteRescueRequest);
+router.get('/:id', verifyToken, rescueController.getRescueById); 
 
 module.exports = router;
