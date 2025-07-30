@@ -68,3 +68,26 @@ exports.getVolunteerUpdates = async (req, res) => {
         res.status(500).json({ message: 'Failed to get updates' });
     }
 };
+
+exports.updateAvailability = async (req, res) => {
+  try {
+    const { available } = req.body;
+
+    if (typeof available !== 'boolean') {
+      return res.status(400).json({ message: 'Invalid value for availability' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { available },
+      { new: true }
+    );
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json({ message: 'Availability status updated', available: user.available });
+  } catch (err) {
+    console.error('Error updating availability:', err);
+    res.status(500).json({ message: 'Server error while updating availability' });
+  }
+};

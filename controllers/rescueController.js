@@ -16,7 +16,8 @@ exports.createRescueRequest = async (req, res) => {
 
         await request.save();
 
-        const volunteers = await User.find({ role: 'volunteer' });
+        const volunteers = await User.find({ role: 'volunteer', available: true });
+
 
         const submitter = await User.findById(userId);
 
