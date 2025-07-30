@@ -79,7 +79,9 @@ exports.acceptRescueRequest = async (req, res) => {
     rescue.acceptedBy = volunteerId;
     await rescue.save();
     const volunteer = await User.findById(volunteerId).select('firstName lastName');
-    const volunteerName = `${volunteer.firstName} ${volunteer.lastName}`;
+console.log("🧍 Volunteer info:", volunteer);
+const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
+
     
 
     console.log("✅ Rescue accepted successfully");
@@ -111,12 +113,17 @@ console.log("→ rescueId:", rescue._id);
 
     // ✅ Notify the original requester via socket
     
-    const io = req.app.get('io');
-     io.to(`user_${rescue.user}`) .emit('rescueAccepted',
-       { rescueId: rescue._id,
-         acceptedBy: volunteerName,
-          chatId: chat._id });
-      console.log(`📨 Sent rescueAccepted to ${userRoom}`);
+    const io = req.io; // ✅ Cleaner and already injected via middleware
+
+    const userRoom = `user_${rescue.user}`;
+io.to(userRoom).emit('rescueAccepted', {
+  rescueId: rescue._id,
+  acceptedBy: volunteerName,
+  chatId: chat._id
+});
+console.log(`📨 Sent rescueAccepted to ${userRoom}`); // ✅ No more error
+
+
 
     // ✅ Respond to volunteer with chat ID
     res.status(200).json({
