@@ -160,3 +160,18 @@ exports.getRescueById = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// After updating rescue as accepted
+const io = req.app.get("io"); // get socket.io instance
+const rescue = await RescueRequest.findByIdAndUpdate(...); // already done
+
+// Find the original requester
+const rescueUser = await User.findById(rescue.user);
+
+if (rescueUser && rescueUser._id.toString() !== req.user._id.toString()) {
+  io.to(rescueUser._id.toString()).emit("rescueAccepted", {
+    rescueId: rescue._id,
+    acceptedBy: req.user.firstName, // or user object
+    time: new Date()
+  });
+}
