@@ -76,7 +76,8 @@ exports.acceptRescueRequest = async (req, res) => {
 
     // ✅ Create or find a chat between requester and volunteer
     let chat = await Chat.findOne({
-      participants: { $all: [rescue.user.toString(), volunteerId.toString()] }
+      participants: { $all: [rescue.user.toString(), volunteerId.toString()] },
+      rescueId: rescue._id
     });
 
     if (!chat) {
