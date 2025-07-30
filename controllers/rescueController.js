@@ -2,62 +2,110 @@ const Notification = require('../models/notification');
 const User = require('../models/user');
 const RescueRequest = require('../models/RescueRequest');
 
+const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
+
+
 exports.createRescueRequest = async (req, res) => {
-    try {
-        const { location, time, reason } = req.body;
-        const userId = req.user.id;
+  try {
+    const { location, time, reason } = req.body;
+    const userId = req.user.id;
 
-        const request = new RescueRequest({
-            user: userId,
-            location,
-            time,
-            reason
-        });
+    const request = new RescueRequest({
+      user: userId,
+      location,
+      time,
+      reason
+    });
 
-        await request.save();
+    await request.save();
 
-        const volunteers = await User.find({ role: 'volunteer', available: true });
+    const volunteers = await User.find({ role: 'volunteer', available: true });
+    const submitter = await User.findById(userId);
 
+    await Promise.all(volunteers.map(vol =>
+      Notification.create({
+        user: vol._id,
+        message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
+        sender: userId,
+        location,
+        reason,
+        rescueId: request._id,
+        status: request.status
+      })
+    ));
 
-        const submitter = await User.findById(userId);
+    req.io.to('volunteers').emit('newRescueRequest', {
+      message: `New rescue request: ${reason}`,
+      location,
+      time,
+    });
 
-const notifications = volunteers.map(vol => ({
-  user: vol._id,
-  message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
-  sender: userId ,
-  location: location,
-  reason: reason,
-  rescueId: request._id
-}));
+    res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
 
-       
-
-      await Promise.all(volunteers.map(vol => {
-  return Notification.create({
-    user: vol._id,
-    message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
-    sender: userId,
-    location,
-    reason,
-    rescueId: request._id,
-    status: request.status 
-  });
-}));
-
-
-        req.io.to('volunteers').emit('newRescueRequest', {
-            message: `New rescue request: ${reason}`,
-            location,
-            time,
-        });
-
-        res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
-
-    } catch (err) {
-        console.error("Rescue error:", err);
-        res.status(500).json({ message: 'Error creating rescue request' });
-    }
+  } catch (err) {
+    console.error("❌ Rescue error:", err);
+    res.status(500).json({ message: 'Error creating rescue request' });
+  }
 };
+
+exports.acceptRescueRequest = async (req, res) => {
+  try {
+    const rescueId = req.params.id;
+    const volunteerId = req.user.id;
+
+    console.log("🔧 Accept request called with:");
+    console.log("→ rescueId:", rescueId);
+    console.log("→ volunteerId:", volunteerId);
+
+    const rescue = await RescueRequest.findById(rescueId);
+    if (!rescue) {
+      console.log("❌ Rescue not found");
+      return res.status(404).json({ message: 'Rescue request not found' });
+    }
+
+    if (rescue.status !== 'pending') {
+      console.log("⚠️ Already accepted");
+      return res.status(400).json({ message: 'This rescue request is already taken' });
+    }
+
+    rescue.status = 'accepted';
+    rescue.acceptedBy = volunteerId;
+    await rescue.save();
+
+    console.log("✅ Rescue accepted successfully");
+
+    // ✅ Create or find a chat between requester and volunteer
+    let chat = await Chat.findOne({
+      participants: { $all: [rescue.user.toString(), volunteerId.toString()] }
+    });
+
+    if (!chat) {
+      chat = await Chat.create({
+        participants: [rescue.user, volunteerId],
+        rescueId: rescue._id
+      });
+    }
+
+    // ✅ Notify the original requester via socket
+    const io = req.app.get('io');
+    io.to(`user_${rescue.user}`).emit('rescueAccepted', {
+      rescueId: rescue._id,
+      acceptedBy: req.user.firstName,
+      chatId: chat._id
+    });
+
+    // ✅ Respond to volunteer with chat ID
+    res.status(200).json({
+      message: 'Rescue accepted successfully',
+      chatId: chat._id
+    });
+
+  } catch (err) {
+    console.error('❗ Accept rescue error:', err);
+    res.status(500).json({ message: 'Server error while accepting rescue' });
+  }
+};
+
 
 exports.getMyRescueRequests = async (req, res) => {
   try {
@@ -107,46 +155,7 @@ exports.getAllRescueRequests = async (req, res) => {
   }
 };
 
-exports.acceptRescueRequest = async (req, res) => {
-  try {
-    const rescueId = req.params.id;
-    const volunteerId = req.user.id;
 
-    console.log("🔧 Accept request called with:");
-    console.log("→ rescueId:", rescueId);
-    console.log("→ volunteerId:", volunteerId);
-
-
-    const rescue = await RescueRequest.findById(rescueId);
-    console.log("🚨 Notification saving rescueId:", rescue?._id);
-    if (!rescue) {
-      console.log("❌ Rescue not found");
-      return res.status(404).json({ message: 'Rescue request not found' });
-    }
-
-    if (rescue.status !== 'pending') {
-      console.log("⚠️ Already accepted");
-      return res.status(400).json({ message: 'This rescue request is already taken' });
-    }
-
-    rescue.status = 'accepted';
-    rescue.acceptedBy = volunteerId;
-    await rescue.save(); // 🔧 This line might fail if acceptedBy is not a valid ObjectId
-
-    console.log("✅ Rescue accepted successfully");
-
-    req.io.to(`user_${rescue.user}`).emit('rescueAccepted', {
-      rescueId: rescue._id,
-      acceptedBy: volunteerId
-    });
-
-    res.status(200).json({ message: 'Rescue accepted successfully', rescue });
-
-  } catch (err) {
-    console.error('❗ Accept rescue error:', err); // THIS will now show the real reason
-    res.status(500).json({ message: 'Server error while accepting rescue' });
-  }
-};
 
 
 
@@ -161,17 +170,4 @@ exports.getRescueById = async (req, res) => {
   }
 };
 
-// After updating rescue as accepted
-const io = req.app.get("io"); // get socket.io instance
-const rescue = await RescueRequest.findByIdAndUpdate(...); // already done
 
-// Find the original requester
-const rescueUser = await User.findById(rescue.user);
-
-if (rescueUser && rescueUser._id.toString() !== req.user._id.toString()) {
-  io.to(rescueUser._id.toString()).emit("rescueAccepted", {
-    rescueId: rescue._id,
-    acceptedBy: req.user.firstName, // or user object
-    time: new Date()
-  });
-}
