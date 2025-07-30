@@ -5,7 +5,6 @@ const Chat = require("../models/chat");
 exports.sendMessage = async (req, res) => {
   try {
     const { chatId, text, image } = req.body;
-console.log("📨 Incoming body:", { chatId, text, imageLength: image?.length });
     const senderId = req.user.id;
 
     const chat = await Chat.findById(chatId).populate("participants");
@@ -22,30 +21,34 @@ console.log("📨 Incoming body:", { chatId, text, imageLength: image?.length })
     });
 
     // Populate sender info for real-time emission
-    const populatedMessage = await Message.findById(message._id).populate("sender", "firstName lastName img");
+    const populated = await Message.findById(message._id)
+      .populate("sender", "firstName lastName img");
+
+    const senderName = populated.sender
+      ? `${populated.sender.firstName} ${populated.sender.lastName}`
+      : "Someone";
 
     // Save notification for receiver
-    if (text && text.trim()) {
+    if (text?.trim()) {
       await Notification.create({
-  type: 'message',
-  user: receiver._id,
-  message: `New message from ${req.user.firstName || "user"}: "${text.slice(0, 30)}..."`,
-  chatId,
-  sender: senderId,
-  isRead: false,
-});
-
+        type:    'message',
+        user:    receiver._id,
+        message: `New message from ${senderName}: "${text.slice(0,30)}..."`,
+        chatId,
+        sender:  senderId,
+        isRead:  false,
+      });
     }
 
     // Send real-time message to chat participants
-    req.io.to(chatId).emit("newMessage", populatedMessage);
+    req.io.to(chatId).emit("newMessage", populated);
 
     // Send notification to receiver (for all pages)
     req.io.to(`user_${receiver._id}`).emit("newMessageNotification", {
       chatId,
       message: text || "[Image]",
-      senderName: `${req.user.firstName} ${req.user.lastName}`,
-      senderId: senderId
+      senderName,
+      senderId
     });
 
     res.json(message);
