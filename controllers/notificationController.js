@@ -2,7 +2,15 @@ const Notification = require('../models/notification');
 const Car = require('../models/car');
 const RescueRequest = require('../models/RescueRequest');
 
-
+exports.getNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json(notifications);
+  } catch (err) {
+    console.error('Fetch notifications error:', err);
+    res.status(500).json({ error: 'Failed to get notifications' });
+  }
+};
 
 exports.deleteNotification = async (req, res) => {
   try {

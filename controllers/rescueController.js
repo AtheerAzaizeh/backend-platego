@@ -48,8 +48,6 @@ exports.createRescueRequest = async (req, res) => {
   }
 };
 
-const mongoose = require('mongoose'); // Make sure this is required at the top
-
 exports.acceptRescueRequest = async (req, res) => {
   try {
     const rescueId = req.params.id;
@@ -65,11 +63,6 @@ exports.acceptRescueRequest = async (req, res) => {
       return res.status(404).json({ message: 'Rescue request not found' });
     }
 
-    if (!rescue.user) {
-      console.log("❌ Rescue request has no user assigned.");
-      return res.status(500).json({ message: 'Rescue request missing user.' });
-    }
-
     if (rescue.status !== 'pending') {
       console.log("⚠️ Already accepted");
       return res.status(400).json({ message: 'This rescue request is already taken' });
@@ -78,40 +71,32 @@ exports.acceptRescueRequest = async (req, res) => {
     rescue.status = 'accepted';
     rescue.acceptedBy = volunteerId;
     await rescue.save();
+<<<<<<< HEAD
     const volunteer = await User.findById(volunteerId).select('firstName lastName');
 console.log("🧍 Volunteer info:", volunteer);
 const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
 
     
+=======
+>>>>>>> c5df778e03726c15da067ab4ce4f395ceb52fe4e
 
     console.log("✅ Rescue accepted successfully");
 
-    const requesterId = new mongoose.Types.ObjectId(rescue.user);
-    const volunteerObjId = new mongoose.Types.ObjectId(volunteerId);
-
     // ✅ Create or find a chat between requester and volunteer
-    console.log("💬 Attempting to create chat with:");
-console.log("→ participants:", [requesterId, volunteerObjId]);
-console.log("→ rescueId:", rescue._id);
-
     let chat = await Chat.findOne({
-      participants: { $all: [requesterId, volunteerObjId] }
+      participants: { $all: [rescue.user.toString(), volunteerId.toString()] },
+      rescueId: rescue._id
     });
 
     if (!chat) {
-      try {
-        chat = await Chat.create({
-          participants: [requesterId, volunteerObjId],
-          rescueId: rescue._id
-        });
-        console.log("📦 New chat created:", chat);
-      } catch (chatErr) {
-        console.error("❌ Failed to create chat:", chatErr);
-        return res.status(500).json({ message: 'Failed to create chat' });
-      }
+      chat = await Chat.create({
+        participants: [rescue.user, volunteerId],
+        rescueId: rescue._id
+      });
     }
 
     // ✅ Notify the original requester via socket
+<<<<<<< HEAD
     
     const io = req.io; // ✅ Cleaner and already injected via middleware
 
@@ -124,6 +109,14 @@ io.to(userRoom).emit('rescueAccepted', {
 console.log(`📨 Sent rescueAccepted to ${userRoom}`); // ✅ No more error
 
 
+=======
+    const io = req.app.get('io');
+    io.to(`user_${rescue.user}`).emit('rescueAccepted', {
+      rescueId: rescue._id,
+      acceptedBy: req.user.firstName,
+      chatId: chat._id
+    });
+>>>>>>> c5df778e03726c15da067ab4ce4f395ceb52fe4e
 
     // ✅ Respond to volunteer with chat ID
     res.status(200).json({

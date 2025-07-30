@@ -11,6 +11,7 @@ const notificationSchema = new mongoose.Schema({
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     chatId: { type: mongoose.Schema.Types.ObjectId, ref: 'Chat' },
     location: { type: String },
+    reason: { type: String },
     rescueId: {
   type: mongoose.Schema.Types.ObjectId,
   ref: 'RescueRequest',
