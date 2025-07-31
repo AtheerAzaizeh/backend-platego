@@ -1,9 +1,10 @@
 const RescueRequest = require('../models/RescueRequest');
 const Notification = require('../models/notification');
 const User = require('../models/user');
-const Chat = require('../models/chat');
-const NodeGeocoder = require('node-geocoder');
-const geocoder = NodeGeocoder({ provider: 'openstreetmap' });
+const RescueRequest = require('../models/RescueRequest');
+const { getCoordinates } = require('../controllers/reportController');
+const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
+
 
 exports.createRescueRequest = async (req, res) => {
   try {
@@ -181,25 +182,10 @@ exports.getRescueById = async (req, res) => {
   try {
     const rescue = await RescueRequest.findById(req.params.id);
     if (!rescue) return res.status(404).json({ message: 'Rescue not found' });
-
-    // If coordinates exist in DB, use them. Otherwise geocode on the fly (legacy support)
-    let coordinates = rescue.coordinates && rescue.coordinates.lat && rescue.coordinates.lng
-      ? rescue.coordinates
-      : null;
-
-    if (!coordinates && rescue.location) {
-      const geo = await geocoder.geocode(rescue.location);
-      if (geo && geo.length > 0) {
-        coordinates = { lat: geo[0].latitude, lng: geo[0].longitude };
-      }
-    }
-
-    res.json({ ...rescue.toObject(), coordinates });
-
+    res.json(rescue);
   } catch (err) {
     console.error('Error fetching rescue by ID:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 
