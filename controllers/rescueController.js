@@ -25,7 +25,7 @@ exports.createRescueRequest = async (req, res) => {
     await Promise.all(volunteers.map(vol =>
       Notification.create({
         user: vol._id,
-        message: `New rescue request near ${location} — submitted by ${req.user.firstName} ${req.user.lastName}`,
+        message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
         sender: userId,
         location,
         reason,
@@ -34,16 +34,13 @@ exports.createRescueRequest = async (req, res) => {
       })
     ));
 
-    const io = req.app.get('io');
-    io.to('volunteers').emit('newRescueRequest', {
-      message: `New rescue request: ${reason} at ${location}`,
+    req.io.to('volunteers').emit('newRescueRequest', {
+      message: `New rescue request: ${reason}`,
       location,
       time,
-      rescueId: request._id
-      });
+    });
 
-
-    res.status(201).json({ success: true, request });
+    res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
 
   } catch (err) {
     console.error("❌ Rescue error:", err);
@@ -102,7 +99,7 @@ const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}`
     const io = req.io; // ✅ Cleaner and already injected via middleware
 
     const userRoom = `user_${rescue.user}`;
-  io.to(userRoom).emit('rescueAccepted', {
+io.to(userRoom).emit('rescueAccepted', {
   rescueId: rescue._id,
   acceptedBy: volunteerName,
   chatId: chat._id
