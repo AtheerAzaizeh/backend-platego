@@ -73,8 +73,8 @@ exports.acceptRescueRequest = async (req, res) => {
     await rescue.save();
 
     const volunteer = await User.findById(volunteerId).select('firstName lastName');
-console.log("🧍 Volunteer info:", volunteer);
-const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
+    console.log("🧍 Volunteer info:", volunteer);
+    const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
 
     
 
