@@ -34,11 +34,12 @@ exports.createRescueRequest = async (req, res) => {
       })
     ));
 
-    req.io.to('volunteers').emit('newRescueRequest', {
-      message: `New rescue request: ${reason}`,
-      location,
-      time,
-    });
+  req.io.to('volunteers').emit('newRescueRequest', {
+    rescueId: request._id,
+    message: `New rescue request: ${reason}`,
+    location,
+    time,
+  });
 
     res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
 
