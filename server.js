@@ -26,7 +26,7 @@ app.options('*', cors());
 const server = http.createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: authRoutes.allowedOrigin,
+    origin: allowedOrigin,
     methods: ['GET','POST'],
     allowedHeaders: ['Content-Type','Authorization'],
     credentials: true
