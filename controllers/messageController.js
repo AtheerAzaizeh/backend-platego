@@ -4,7 +4,7 @@ const Chat = require("../models/chat");
 
 exports.sendMessage = async (req, res) => {
   try {
-    const { chatId, text, image } = req.body;
+    const { chatId, text, image, audio } = req.body;
     const senderId = req.user.id;
 
     const chat = await Chat.findById(chatId).populate("participants");
@@ -15,9 +15,10 @@ exports.sendMessage = async (req, res) => {
 
     const message = await Message.create({
       chat: chatId,
-      sender: senderId,
+      sender: req.user.id,
       text: text || "",
       image: image || null,
+      audio: audio || null,
       timestamp: new Date()
     });
 
@@ -38,10 +39,11 @@ exports.sendMessage = async (req, res) => {
 
     // 👇 Emit real-time message to the chat room
     req.io.to(chatId).emit("newMessage", {
-      text: message.text,
-      image: message.image,
-      timestamp: message.timestamp,
-      senderId: senderId
+        text: message.text,
+        image: message.image,
+        audio: message.audio,
+        timestamp: message.timestamp,
+        senderId: senderId
     });
 
     // 👇 Send notification to receiver
