@@ -5,7 +5,6 @@ const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const http = require("http");
 const socketio = require("socket.io");
-const path = require("path");
 const allowedOrigin = process.env.FRONTEND_URL;
 // Load .env
 dotenv.config();
@@ -67,7 +66,6 @@ app.use("/api/user", userRoutes);
 // Call monitoring endpoint
 app.get("/api/calls/active", callController.getActiveCalls);
 
-
 // MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
@@ -92,12 +90,6 @@ io.on("connection", (socket) => {
   socket.on("joinChat", (chatId) => {
     socket.join(chatId);
     console.log(`Socket ${socket.id} joined chat ${chatId}`);
-  });
-
-  // Leave chat room
-  socket.on("leaveChat", (chatId) => {
-    socket.leave(chatId);
-    console.log(`Socket ${socket.id} left chat ${chatId}`);
   });
 
   // Handle call signaling

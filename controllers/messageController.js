@@ -17,33 +17,34 @@ exports.sendMessage = async (req, res) => {
       chat: chatId,
       sender: senderId,
       text: text || "",
-      image: image || null
+      image: image || null,
+      timestamp: new Date()
     });
 
-    // Populate sender info for real-time emission
-    const populated = await Message.findById(message._id)
-      .populate("sender", "firstName lastName img");
+    await message.populate("sender", "firstName lastName img");
 
-    const senderName = populated.sender
-      ? `${populated.sender.firstName} ${populated.sender.lastName}`
-      : "Someone";
-
-    // Save notification for receiver
+    // 👇 Save notification
+    const senderName = `${message.sender.firstName} ${message.sender.lastName || ""}`.trim();
     if (text?.trim()) {
       await Notification.create({
         type:    'message',
         user:    receiver._id,
-        message: `New message from ${senderName}: "${text.slice(0,30)}..."`,
+        message: `New message from ${senderName}: "${text.slice(0, 30)}..."`,
         chatId,
         sender:  senderId,
         isRead:  false,
       });
     }
 
-    // Send real-time message to chat participants
-    req.io.to(chatId).emit("newMessage", populated);
+    // 👇 Emit real-time message to the chat room
+    req.io.to(chatId).emit("newMessage", {
+      text: message.text,
+      image: message.image,
+      timestamp: message.timestamp,
+      senderId: senderId
+    });
 
-    // Send notification to receiver (for all pages)
+    // 👇 Send notification to receiver
     req.io.to(`user_${receiver._id}`).emit("newMessageNotification", {
       chatId,
       message: text || "[Image]",
