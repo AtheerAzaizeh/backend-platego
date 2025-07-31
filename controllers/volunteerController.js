@@ -28,20 +28,24 @@ exports.registerAsVolunteer = async (req, res) => {
     }
 };
 
-exports.updateVolunteer = async (req, res) => {
-    try {
-        const updates = req.body;
-        const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
-
-        if (!user) return res.status(404).json({ message: 'User not found' });
-
-        res.json({ message: 'Volunteer updated', user });
-    } catch (err) {
-        console.error('Error updating volunteer:', err);
-        res.status(500).json({ message: 'Error updating volunteer' });
+exports.becomeVolunteer = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+    if (user.role === 'volunteer') {
+      return res.status(400).json({ message: 'You are already a volunteer' });
+    }
+    user.role = 'volunteer';
+    await user.save();
+    res.json({ message: 'You are now a volunteer', role: user.role });
+  } catch (err) {
+    console.error('Error updating role:', err);
+    res.status(500).json({ message: 'Server error while updating role' });
+  }
 };
-
 
 exports.getAllVolunteers = async (req, res) => {
     try {
@@ -72,19 +76,25 @@ exports.getVolunteerUpdates = async (req, res) => {
 exports.updateAvailability = async (req, res) => {
   try {
     const { available } = req.body;
-
     if (typeof available !== 'boolean') {
       return res.status(400).json({ message: 'Invalid value for availability' });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { available },
-      { new: true }
-    );
+    // fetch the full user so we can check their role
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    // only volunteers may toggle their availability
+    if (user.role !== 'volunteer') {
+      return res
+        .status(403)
+        .json({ message: 'Only volunteers can update availability' });
+    }
 
+    user.available = available;
+    await user.save();
     res.json({ message: 'Availability status updated', available: user.available });
   } catch (err) {
     console.error('Error updating availability:', err);

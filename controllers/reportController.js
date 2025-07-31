@@ -22,7 +22,7 @@ async function getCoordinates({ city, street, number }) {
   return null;
 }
 
-exports.createReportWithCoordinates = async (req, res) => {
+exports.createReportWithCoordinates = async (req, res , next) => {
   try {
     const { plate, reason, reportType, location } = req.body;
     const senderId = req.user.id;
@@ -31,18 +31,32 @@ exports.createReportWithCoordinates = async (req, res) => {
     ? `${sender.firstName} ${sender.lastName}`
     : 'Someone';
     // 1. Validate
-    if (!plate || !reason || !reportType || !location?.city || !location?.street || !location?.number) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
+    if (!plate)      return res.status(400).json({ error: 'Plate number is required' });
+    if (!reason)     return res.status(400).json({ error: 'Reason is required' });
+    if (!reportType) return res.status(400).json({ error: 'Report type is required' });
+    if (!location?.city)
+                      return res.status(400).json({ error: 'City in location is required' });
+    if (!location?.street)
+                      return res.status(400).json({ error: 'Street in location is required' });
+    if (!location?.number)
+                      return res.status(400).json({ error: 'Street number is required' });
     // 2. Lookup coords
-    const coords = await getCoordinates(location);
+    let coords;
+    try {
+      coords = await getCoordinates(location);
+    } catch (geoErr) {
+      console.error('Geocoding error:', geoErr);
+      return res
+        .status(502)
+        .json({ error: 'Failed to lookup coordinates', details: geoErr.message });
+    }
 
     // 3. Find car & owner
     const car = await Car.findOne({ plate });
     if (!car) {
-      return res.status(404).json({ error: 'Car not found' });
+      return res.status(404).json({ error: `No car found for plate ${plate}` });
     }
+
     const receiverId = car.owner.toString();
     const reportImage = car.image || 'images/default-car.jpg';
 
@@ -59,10 +73,10 @@ exports.createReportWithCoordinates = async (req, res) => {
     const savedReport = await newReport.save();
 
     // 5. If user reported their own car, skip notifications
-    if (receiverId === senderId) {
+    if (car.owner.equals(userId)) {
       return res.status(201).json({
-        message: 'Report submitted on your own car',
-        report: savedReport
+        message: 'You reported your own car; no notification sent.',
+        savedReport,
       });
     }
 
@@ -90,7 +104,7 @@ exports.createReportWithCoordinates = async (req, res) => {
     console.log(`📣 Emitting newReportNotification to user_${receiverId}:`, payload);
     req.io.to(`user_${receiverId}`).emit('newReportNotification', payload);
 
-    // 8. (Optional) also fire your generic handler
+    // 8. also fire your generic handler
     req.io.to(`user_${receiverId}`).emit('new-notification', {
       type:     'report',
       message:  reason,
@@ -112,8 +126,7 @@ exports.createReportWithCoordinates = async (req, res) => {
     const chatMsg = await Message.create({
       chat:    chat._id,
       sender:  senderId,
-      text:    `Hey, I just reported your car (${plate}) because: ${reason}`,
-      date:    new Date()
+      text:    `Hey, I just reported your car (${plate}) because: ${reason}`
     });
     chat.lastMessage     = chatMsg.text;
     chat.lastMessageTime = chatMsg.date;
@@ -128,36 +141,89 @@ exports.createReportWithCoordinates = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Error creating report:', err);
-    return res.status(500).json({ error: 'Server error' });
+    console.error('createReportWithCoordinates failed:', err.message);
+    next(err);
   }
 };
 
-
-
-exports.getCarByPlate = async (req, res) => {
+exports.getCarByPlate = async (req, res , next) => {
   try {
     const { plate } = req.params;
 
-    const car = await Car.findOne({ plate }).populate('owner');
-    if (!car) return res.status(404).json({ message: 'Car not found' });
+    // 1. Validate presence
+    if (!plate) {
+      return res.status(400).json({ error: 'Plate parameter is required' });
+    }
 
-    res.status(200).json({ car });
+    // 2. Fetch & populate only needed owner fields
+    const car = await Car.findOne({ plate })
+      .populate({
+        path: 'owner',
+        select: 'firstName lastName email'    // tailor to what the client needs
+      });
+    
+    // 4. Not found?
+    if (!car) {
+      return res
+        .status(404)
+        .json({ error: `No car found with plate '${plate}'` });
+    }
+
+    // 5. Success
+    return res.status(200).json({ car });
 
   } catch (err) {
-    console.error('Get car error:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error('getCarByPlate failed:', err);
+    return next(err);
   }
 };
 
-exports.getMyReports = async (req, res) => {
+exports.getMyReports = async (req, res, next) => {
   try {
+    // 1. Authentication check
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const userId = req.user.id;
-    const reports = await Report.find({ sender: userId }).sort({ date: -1 });
-    res.status(200).json({ reports });
+
+    // 2. Parse & validate pagination query
+    const page  = parseInt(req.query.page,  10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    if (page < 1 || limit < 1) {
+      return res
+        .status(400)
+        .json({ error: 'Page and limit must be positive integers' });
+    }
+    const skip = (page - 1) * limit;
+
+    // 3. Count total reports for pagination metadata
+    const totalReports = await Report.countDocuments({ sender: userId });
+
+    // 4. Fetch reports
+    const reports = await Report.find({ sender: userId })
+      .sort({ createdAt: -1 })       // uses timestamps: true
+      .skip(skip)
+      .limit(limit)
+      .select('plate reason reportType location createdAt') 
+      .lean();                        // plain JS objects
+
+    // 5. Build pagination info
+    const totalPages = Math.ceil(totalReports / limit);
+
+    // 6. Return
+    return res.status(200).json({
+      reports,
+      pagination: {
+        total:      totalReports,
+        page,
+        limit,
+        totalPages
+      }
+    });
+
   } catch (err) {
-    console.error('Get reports error:', err);
-    res.status(500).json({ message: 'Server error while fetching reports' });
+    console.error('getMyReports failed:', err);
+    return next(err); 
   }
 };
 
@@ -193,12 +259,41 @@ exports.deleteReport = async (req, res) => {
   }
 };
 
-exports.getReportById = async (req, res) => {
+exports.getReportById = async (req, res, next) => {
   try {
-    const report = await Report.findById(req.params.id);
-    if (!report) return res.status(404).json({ error: 'Report not found' });
-    res.json({ report });
+    const { id } = req.params;
+
+    // 1. Validate presence
+    if (!id) {
+      return res.status(400).json({ error: 'Report ID is required' });
+    }
+
+    // 2. Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid report ID format' });
+    }
+
+    // 3. Fetch report, populate sender
+    const report = await Report.findById(id)
+      .select('plate reason reportType location status image coordinates createdAt sender')
+      .populate({
+        path:   'sender',
+        select: 'firstName lastName email' 
+      })
+      .lean();
+
+    // 4. Not found?
+    if (!report) {
+      return res
+        .status(404)
+        .json({ error: `No report found with ID '${id}'` });
+    }
+
+    // 5. Success
+    return res.status(200).json({ report });
+
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('getReportById failed:', err);
+    return next(err);
   }
 };

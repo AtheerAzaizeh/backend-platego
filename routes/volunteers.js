@@ -7,8 +7,8 @@ router.get('/', authMiddleware, volunteerController.getAllVolunteers);
 router.get('/updates', authMiddleware, volunteerController.getVolunteerUpdates);
 router.get('/status', authMiddleware, volunteerController.getVolunteerStatus);
 router.post('/register', authMiddleware, volunteerController.registerAsVolunteer);
-router.put('/update', authMiddleware, volunteerController.updateVolunteer);
-router.put('/update-status', authMiddleware, volunteerController.updateAvailability);
+router.patch('/become-volunteer', authMiddleware, volunteerController.becomeVolunteer);
+router.patch('/availability', authMiddleware, volunteerController.updateAvailability);
 
 
 module.exports = router;
