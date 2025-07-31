@@ -6,27 +6,33 @@ const mongoose = require("mongoose");
 const http = require("http");
 const socketio = require("socket.io");
 const path = require("path");
-
+const allowedOrigin = process.env.FRONTEND_URL;
 // Load .env
 dotenv.config();
 
 // Initialize Express
 const app = express();
 
+// Allow CORS
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
+}));
+app.options('*', cors());
+
+// Initialize Socket.IO
 const server = http.createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
+    origin: authRoutes.allowedOrigin,
+    methods: ['GET','POST'],
+    allowedHeaders: ['Content-Type','Authorization'],
+    credentials: true
+  }
 });
 app.set('io', io);
-// Middleware
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
 
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: true , limit: "10mb" }));
