@@ -22,8 +22,11 @@ async function getCoordinates({ city, street, number }) {
   return null;
 }
 
-exports.createReportWithCoordinates = async (req, res , next) => {
+exports.createReportWithCoordinates = async (req, res ) => {
   try {
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: userId not found" });
+    }
     const { plate, reason, reportType, location } = req.body;
     const senderId = req.user.id;
     const sender = await User.findById(senderId).select('firstName lastName');
@@ -142,11 +145,11 @@ exports.createReportWithCoordinates = async (req, res , next) => {
 
   } catch (err) {
     console.error('createReportWithCoordinates failed:', err.message);
-    next(err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-exports.getCarByPlate = async (req, res , next) => {
+exports.getCarByPlate = async (req, res ) => {
   try {
     const { plate } = req.params;
 
@@ -174,11 +177,11 @@ exports.getCarByPlate = async (req, res , next) => {
 
   } catch (err) {
     console.error('getCarByPlate failed:', err);
-    return next(err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-exports.getMyReports = async (req, res, next) => {
+exports.getMyReports = async (req, res) => {
   try {
     // 1. Authentication check
     if (!req.user || !req.user.id) {
@@ -223,7 +226,7 @@ exports.getMyReports = async (req, res, next) => {
 
   } catch (err) {
     console.error('getMyReports failed:', err);
-    return next(err); 
+    res.status(500).json({ error: "Internal Server Error" }); 
   }
 };
 
@@ -259,7 +262,7 @@ exports.deleteReport = async (req, res) => {
   }
 };
 
-exports.getReportById = async (req, res, next) => {
+exports.getReportById = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -294,6 +297,6 @@ exports.getReportById = async (req, res, next) => {
 
   } catch (err) {
     console.error('getReportById failed:', err);
-    return next(err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
