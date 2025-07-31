@@ -119,12 +119,15 @@ io.on("connection", (socket) => {
     io.to(chatId).emit("messageRead", { chatId, userId });
   });
 
-  socket.on("joinRescue", (rescueId) => {
-  socket.join(`rescue_${rescueId}`);
+  socket.on('joinRescue', rescueId => {
+    const room = `rescue_${rescueId}`;
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined ${room}`);
   });
 
-  socket.on("volunteerLocationUpdate", ({ rescueId, lat, lng }) => {
-      io.to(`rescue_${rescueId}`).emit("volunteerLocation", { lat, lng });
+  socket.on('rescueLocationUpdate', ({ rescueId, lat, lng }) => {
+    const room = `rescue_${rescueId}`;
+    socket.to(room).emit('rescueLocation', { lat, lng, timestamp: Date.now() });
   });
 
   socket.on("disconnect", () => {
