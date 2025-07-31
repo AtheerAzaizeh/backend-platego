@@ -69,3 +69,24 @@ exports.getMe = asyncHandler(async (req, res) => {
     throw new Error("User not found")
   }
 })
+
+exports.updateUser = async (req, res) => {
+  console.log("🛠️ updateUser called for ID:", req.params.id);
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      console.log("❌ User not found");
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(updatedUser);
+  } catch (err) {
+    console.error("❌ Server error:", err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

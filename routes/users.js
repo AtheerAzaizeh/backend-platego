@@ -7,5 +7,7 @@ router.get('/', userController.getAllUsers);
 router.get("/me", authMiddleware, userController.getMe);
 router.put('/become-volunteer', authMiddleware, userController.becomeVolunteer);
 router.put('/toggle-availability', authMiddleware, userController.toggleAvailability);
+router.put('/:id', authMiddleware, userController.updateUser);
+
 
 module.exports = router;
