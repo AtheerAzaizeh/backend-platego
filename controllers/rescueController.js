@@ -1,34 +1,24 @@
-const RescueRequest = require('../models/RescueRequest');
 const Notification = require('../models/notification');
 const User = require('../models/user');
-const { getCoordinates } = require('../controllers/reportController');
+const RescueRequest = require('../models/RescueRequest');
+
 const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
-const NodeGeocoder = require('node-geocoder');
-const geocoder = NodeGeocoder({ provider: 'openstreetmap' });
+
 
 exports.createRescueRequest = async (req, res) => {
   try {
     const { location, time, reason } = req.body;
     const userId = req.user.id;
 
-    // Geocode address string for coordinates
-    let coordinates = null;
-    const geo = await geocoder.geocode(location);
-    if (geo && geo.length > 0) {
-      coordinates = { lat: geo[0].latitude, lng: geo[0].longitude };
-    }
-
     const request = new RescueRequest({
       user: userId,
       location,
       time,
-      reason,
-      coordinates // Will be { lat, lng } or null
+      reason
     });
 
     await request.save();
 
-    // Notify volunteers as before...
     const volunteers = await User.find({ role: 'volunteer', available: true });
     const submitter = await User.findById(userId);
 
@@ -83,8 +73,8 @@ exports.acceptRescueRequest = async (req, res) => {
     await rescue.save();
 
     const volunteer = await User.findById(volunteerId).select('firstName lastName');
-    console.log("🧍 Volunteer info:", volunteer);
-    const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
+console.log("🧍 Volunteer info:", volunteer);
+const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
 
     
 
@@ -178,6 +168,10 @@ exports.getAllRescueRequests = async (req, res) => {
   }
 };
 
+
+
+
+
 exports.getRescueById = async (req, res) => {
   try {
     const rescue = await RescueRequest.findById(req.params.id);
@@ -188,4 +182,5 @@ exports.getRescueById = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 

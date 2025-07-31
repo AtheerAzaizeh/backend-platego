@@ -17,11 +17,7 @@ const rescueSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null
-  },
-    coordinates: {
-  lat: Number,
-  lng: Number
-}
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('RescueRequest', rescueSchema);
