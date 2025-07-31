@@ -3,7 +3,8 @@ const User = require('../models/user');
 const RescueRequest = require('../models/RescueRequest');
 const { getCoordinates } = require('../controllers/reportController');
 const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
-
+const NodeGeocoder = require('node-geocoder');
+const geocoder = NodeGeocoder({ provider: 'openstreetmap' });
 
 exports.createRescueRequest = async (req, res) => {
   try {
@@ -169,17 +170,23 @@ exports.getAllRescueRequests = async (req, res) => {
   }
 };
 
-
 exports.getRescueById = async (req, res) => {
   try {
     const rescue = await RescueRequest.findById(req.params.id);
-    rescue.coordinates = getCoordinates(rescue.location);
     if (!rescue) return res.status(404).json({ message: 'Rescue not found' });
-    res.json(rescue);
+
+    // Geocode address string
+    const geo = await geocoder.geocode(rescue.location);
+    let coordinates = null;
+    if (geo && geo.length > 0) {
+      coordinates = { lat: geo[0].latitude, lng: geo[0].longitude };
+    }
+
+    // Combine rescue + coordinates in the response (but don't mutate rescue doc)
+    res.json({ ...rescue.toObject(), coordinates });
   } catch (err) {
     console.error('Error fetching rescue by ID:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 
