@@ -182,8 +182,15 @@ exports.getCarByPlate = async (req, res ) => {
 };
 
 exports.getMyReports = async (req, res) => {
-  const reports = await Report.find({ sender: req.user._id });
-  res.json(reports);
+  try {
+    const reports = await Report.find({ sender: req.user._id })
+      .populate('sender', 'firstName lastName email')
+      .populate('car') 
+      .exec();
+    res.json({ reports });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
 exports.getAllReports = async (req, res) => {

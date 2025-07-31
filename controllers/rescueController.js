@@ -1,7 +1,7 @@
 const Notification = require('../models/notification');
 const User = require('../models/user');
 const RescueRequest = require('../models/RescueRequest');
-
+const { getCoordinates } = require('../controllers/reportController');
 const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
 
 
@@ -14,7 +14,8 @@ exports.createRescueRequest = async (req, res) => {
       user: userId,
       location,
       time,
-      reason
+      reason,
+      coordinates: await getCoordinates(location)
     });
 
     await request.save();
@@ -73,8 +74,8 @@ exports.acceptRescueRequest = async (req, res) => {
     await rescue.save();
 
     const volunteer = await User.findById(volunteerId).select('firstName lastName');
-console.log("🧍 Volunteer info:", volunteer);
-const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
+    console.log("🧍 Volunteer info:", volunteer);
+    const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}` : 'Unknown volunteer';
 
     
 
@@ -169,12 +170,10 @@ exports.getAllRescueRequests = async (req, res) => {
 };
 
 
-
-
-
 exports.getRescueById = async (req, res) => {
   try {
     const rescue = await RescueRequest.findById(req.params.id);
+    rescue.coordinates = getCoordinates(rescue.location);
     if (!rescue) return res.status(404).json({ message: 'Rescue not found' });
     res.json(rescue);
   } catch (err) {
