@@ -84,17 +84,9 @@ mongoose
 
 // Socket.IO listeners
 io.on("connection", (socket) => {
-    socket.on('joinUser', userId => {
-    socket.join(`user_${userId}`);
-    console.log(`🟢 Socket ${socket.id} joined room user_${userId}`);
-  });
+  socket.on('joinUser', id => socket.join(`user_${id}`));
+  socket.on('joinAsVolunteer', () => socket.join('volunteers'));
 
-
-  // Join volunteer room
-  socket.on("joinAsVolunteer", () => {
-    socket.join("volunteers");
-    console.log(`Socket ${socket.id} joined 'volunteers' room`);
-  });
 
   // Join specific chat room
   socket.on("joinChat", (chatId) => {
