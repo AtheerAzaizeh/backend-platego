@@ -9,17 +9,27 @@ const allowedOrigin = process.env.FRONTEND_URL;
 // Load .env
 dotenv.config();
 
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || origin === allowedOrigin) {
+      callback(null, true);
+    } else {
+      console.warn("❌ CORS blocked:", origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
+};
+
+
 // Initialize Express
 const app = express();
 
 // Allow CORS
-app.use(cors({
-  origin: allowedOrigin,
-  credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
-}));
-app.options('*', cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Initialize Socket.IO
 const server = http.createServer(app);
@@ -120,7 +130,7 @@ io.on("connection", (socket) => {
   socket.on("joinRescue", (rescueId) => {
   socket.join(`rescue_${rescueId}`);
   });
-  
+
   socket.on("volunteerLocationUpdate", ({ rescueId, lat, lng }) => {
       io.to(`rescue_${rescueId}`).emit("volunteerLocation", { lat, lng });
   });
