@@ -105,6 +105,17 @@ io.on("connection", (socket) => {
     console.log(`➡️ Sent chatListUpdate to user_${toUserId} for chat ${chatId}`);
   });
 
+  socket.on("typing", ({ chatId, userId }) => {
+    socket.to(chatId).emit("typing", { userId });
+  });
+
+  socket.on("stopTyping", ({ chatId, userId }) => {
+    socket.to(chatId).emit("stopTyping", { userId });
+  });
+
+  socket.on("messageRead", ({ chatId, userId }) => {
+    io.to(chatId).emit("messageRead", { chatId, userId });
+  });
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
