@@ -33,12 +33,14 @@ exports.createRescueRequest = async (req, res) => {
         status: request.status
       })
     ));
-
-    req.io.to('volunteers').emit('newRescueRequest', {
+    const io = req.io;
+    
+    volunteers = req.io.to('volunteers').emit('newRescueRequest', {
       message: `New rescue request: ${reason}`,
       location,
-      time,
+      time
     });
+
 
     res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
 
@@ -99,7 +101,7 @@ const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}`
     const io = req.io; // ✅ Cleaner and already injected via middleware
 
     const userRoom = `user_${rescue.user}`;
-io.to(userRoom).emit('rescueAccepted', {
+  io.to(userRoom).emit('rescueAccepted', {
   rescueId: rescue._id,
   acceptedBy: volunteerName,
   chatId: chat._id
