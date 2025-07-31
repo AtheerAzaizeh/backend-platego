@@ -1,7 +1,6 @@
 const RescueRequest = require('../models/RescueRequest');
 const Notification = require('../models/notification');
 const User = require('../models/user');
-const RescueRequest = require('../models/RescueRequest');
 const { getCoordinates } = require('../controllers/reportController');
 const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
 
