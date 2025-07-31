@@ -182,52 +182,8 @@ exports.getCarByPlate = async (req, res ) => {
 };
 
 exports.getMyReports = async (req, res) => {
-  try {
-    // 1. Authentication check
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    const userId = req.user.id;
-
-    // 2. Parse & validate pagination query
-    const page  = parseInt(req.query.page,  10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 20;
-    if (page < 1 || limit < 1) {
-      return res
-        .status(400)
-        .json({ error: 'Page and limit must be positive integers' });
-    }
-    const skip = (page - 1) * limit;
-
-    // 3. Count total reports for pagination metadata
-    const totalReports = await Report.countDocuments({ sender: userId });
-
-    // 4. Fetch reports
-    const reports = await Report.find({ sender: userId })
-      .sort({ createdAt: -1 })       // uses timestamps: true
-      .skip(skip)
-      .limit(limit)
-      .select('plate reason reportType location createdAt') 
-      .lean();                        // plain JS objects
-
-    // 5. Build pagination info
-    const totalPages = Math.ceil(totalReports / limit);
-
-    // 6. Return
-    return res.status(200).json({
-      reports,
-      pagination: {
-        total:      totalReports,
-        page,
-        limit,
-        totalPages
-      }
-    });
-
-  } catch (err) {
-    console.error('getMyReports failed:', err);
-    res.status(500).json({ error: "Internal Server Error" }); 
-  }
+  const reports = await Report.find({ sender: req.user._id });
+  res.json(reports);
 };
 
 exports.getAllReports = async (req, res) => {

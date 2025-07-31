@@ -116,6 +116,15 @@ io.on("connection", (socket) => {
   socket.on("messageRead", ({ chatId, userId }) => {
     io.to(chatId).emit("messageRead", { chatId, userId });
   });
+
+  socket.on("joinRescue", (rescueId) => {
+  socket.join(`rescue_${rescueId}`);
+  });
+  
+  socket.on("volunteerLocationUpdate", ({ rescueId, lat, lng }) => {
+      io.to(`rescue_${rescueId}`).emit("volunteerLocation", { lat, lng });
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
