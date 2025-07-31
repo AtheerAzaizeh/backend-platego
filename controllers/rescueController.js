@@ -25,7 +25,7 @@ exports.createRescueRequest = async (req, res) => {
     await Promise.all(volunteers.map(vol =>
       Notification.create({
         user: vol._id,
-        message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
+        message: `New rescue request near ${location} — submitted by ${req.user.firstName} ${req.user.lastName}`,
         sender: userId,
         location,
         reason,
@@ -33,20 +33,17 @@ exports.createRescueRequest = async (req, res) => {
         status: request.status
       })
     ));
-    req.io.to('volunteers').emit('newRescueRequest', {
-      message: `New rescue request: ${reason}`,
+
+    const io = req.app.get('io');
+    io.to('volunteers').emit('newRescueRequest', {
+      message: `New rescue request: ${reason} at ${location}`,
       location,
       time,
-      rescueId: request._id,
-      reason,
-      submitter: {
-        firstName: submitter.firstName,
-        lastName: submitter.lastName
-      }
-    });
+      rescueId: request._id
+      });
 
 
-    res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
+    res.status(201).json({ success: true, request });
 
   } catch (err) {
     console.error("❌ Rescue error:", err);
