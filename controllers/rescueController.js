@@ -33,12 +33,16 @@ exports.createRescueRequest = async (req, res) => {
         status: request.status
       })
     ));
-    const io = req.io;
-    
-    volunteers = req.io.to('volunteers').emit('newRescueRequest', {
+    req.io.to('volunteers').emit('newRescueRequest', {
       message: `New rescue request: ${reason}`,
       location,
-      time
+      time,
+      rescueId: request._id,
+      reason,
+      submitter: {
+        firstName: submitter.firstName,
+        lastName: submitter.lastName
+      }
     });
 
 
