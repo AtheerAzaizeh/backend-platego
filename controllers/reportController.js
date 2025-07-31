@@ -24,7 +24,7 @@ async function getCoordinates({ city, street, number }) {
 
 exports.createReportWithCoordinates = async (req, res ) => {
   try {
-    if (!userId) {
+    if (!req.user || !req.user.id) {
       return res.status(401).json({ error: "Unauthorized: userId not found" });
     }
     const { plate, reason, reportType, location } = req.body;
@@ -76,7 +76,7 @@ exports.createReportWithCoordinates = async (req, res ) => {
     const savedReport = await newReport.save();
 
     // 5. If user reported their own car, skip notifications
-    if (car.owner.equals(userId)) {
+    if (car.owner.equals(req.user.id)) {
       return res.status(201).json({
         message: 'You reported your own car; no notification sent.',
         savedReport,
