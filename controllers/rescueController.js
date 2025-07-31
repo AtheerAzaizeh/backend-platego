@@ -1,25 +1,33 @@
+const RescueRequest = require('../models/RescueRequest');
 const Notification = require('../models/notification');
 const User = require('../models/user');
-const RescueRequest = require('../models/RescueRequest');
-const { getCoordinates } = require('../controllers/reportController');
-const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
-
+const Chat = require('../models/chat');
+const NodeGeocoder = require('node-geocoder');
+const geocoder = NodeGeocoder({ provider: 'openstreetmap' });
 
 exports.createRescueRequest = async (req, res) => {
   try {
     const { location, time, reason } = req.body;
     const userId = req.user.id;
 
+    // Geocode address string for coordinates
+    let coordinates = null;
+    const geo = await geocoder.geocode(location);
+    if (geo && geo.length > 0) {
+      coordinates = { lat: geo[0].latitude, lng: geo[0].longitude };
+    }
+
     const request = new RescueRequest({
       user: userId,
       location,
       time,
       reason,
-      coordinates: await getCoordinates(location)
+      coordinates // Will be { lat, lng } or null
     });
 
     await request.save();
 
+    // Notify volunteers as before...
     const volunteers = await User.find({ role: 'volunteer', available: true });
     const submitter = await User.findById(userId);
 
@@ -169,13 +177,25 @@ exports.getAllRescueRequests = async (req, res) => {
   }
 };
 
-
 exports.getRescueById = async (req, res) => {
   try {
     const rescue = await RescueRequest.findById(req.params.id);
-    rescue.coordinates = getCoordinates(rescue.location);
     if (!rescue) return res.status(404).json({ message: 'Rescue not found' });
-    res.json(rescue);
+
+    // If coordinates exist in DB, use them. Otherwise geocode on the fly (legacy support)
+    let coordinates = rescue.coordinates && rescue.coordinates.lat && rescue.coordinates.lng
+      ? rescue.coordinates
+      : null;
+
+    if (!coordinates && rescue.location) {
+      const geo = await geocoder.geocode(rescue.location);
+      if (geo && geo.length > 0) {
+        coordinates = { lat: geo[0].latitude, lng: geo[0].longitude };
+      }
+    }
+
+    res.json({ ...rescue.toObject(), coordinates });
+
   } catch (err) {
     console.error('Error fetching rescue by ID:', err);
     res.status(500).json({ message: 'Server error' });
