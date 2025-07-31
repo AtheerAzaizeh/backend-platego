@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const http = require("http");
 const socketio = require("socket.io");
 const allowedOrigin = process.env.FRONTEND_URL;
+const positionsStore = {};
 // Load .env
 dotenv.config();
 
@@ -126,8 +127,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on('rescueLocationUpdate', ({ rescueId, lat, lng }) => {
-    const room = `rescue_${rescueId}`;
-    socket.to(room).emit('rescueLocation', { lat, lng, timestamp: Date.now() });
+    // 1️⃣ Save last volunteer position in memory
+    positionsStore[rescueId] = { lat, lng };
+
+    // 2️⃣ Broadcast to everyone in that rescue room
+    socket.to(`rescue_${rescueId}`)
+          .emit('rescueLocation', { lat, lng });
   });
 
   socket.on("disconnect", () => {

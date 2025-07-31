@@ -9,5 +9,6 @@ router.get('/all', verifyToken, rescueController.getAllRescueRequests);
 router.put('/accept/:id', verifyToken, rescueController.acceptRescueRequest);
 router.delete('/:id', verifyToken, rescueController.deleteRescueRequest);
 router.get('/:id', verifyToken, rescueController.getRescueById); 
+router.get('/:id/positions', verifyToken, rescueController.getRescuePositions);
 
 module.exports = router;

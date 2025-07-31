@@ -1,8 +1,8 @@
 const Notification = require('../models/notification');
 const User = require('../models/user');
 const RescueRequest = require('../models/RescueRequest');
-
-const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
+const positionsStore = require('../server').positionsStore;  
+const Chat = require('../models/chat'); 
 
 
 exports.createRescueRequest = async (req, res) => {
@@ -184,3 +184,21 @@ exports.getRescueById = async (req, res) => {
 };
 
 
+exports.getRescuePositions = async (req, res) => {
+  const { id } = req.params;
+
+  // ensure the rescue exists
+  const rescue = await RescueRequest.findById(id).select('_id');
+  if (!rescue) {
+    return res.status(404).json({ message: 'Rescue not found' });
+  }
+
+  // fetch in-memory volunteer coords
+  const volunteer = positionsStore[id] || null;
+
+  // for now we don’t persist requester coords, so return null
+  return res.json({
+    requester: null,
+    volunteer
+  });
+};
