@@ -1,8 +1,8 @@
 const Notification = require('../models/notification');
 const User = require('../models/user');
 const RescueRequest = require('../models/RescueRequest');
-const positionsStore = require('../server').positionsStore;  
-const Chat = require('../models/chat'); 
+
+const Chat = require('../models/chat'); // Make sure you require the Chat model at the top
 
 
 exports.createRescueRequest = async (req, res) => {
@@ -25,7 +25,7 @@ exports.createRescueRequest = async (req, res) => {
     await Promise.all(volunteers.map(vol =>
       Notification.create({
         user: vol._id,
-        message: `New rescue request near ${location} — submitted by ${submitter.firstName} ${submitter.lastName}`,
+        message: `New rescue request near ${location} — submitted by ${req.user.firstName} ${req.user.lastName}`,
         sender: userId,
         location,
         reason,
@@ -34,14 +34,16 @@ exports.createRescueRequest = async (req, res) => {
       })
     ));
 
-  req.io.to('volunteers').emit('newRescueRequest', {
-    rescueId: request._id,
-    message: `New rescue request: ${reason}`,
-    location,
-    time,
-  });
+    const io = req.app.get('io');
+    io.to('volunteers').emit('newRescueRequest', {
+      message: `New rescue request: ${reason} at ${location}`,
+      location,
+      time,
+      rescueId: request._id
+      });
 
-    res.status(201).json({ message: 'Rescue request created and volunteers notified.' });
+
+    res.status(201).json({ success: true, request });
 
   } catch (err) {
     console.error("❌ Rescue error:", err);
@@ -100,7 +102,7 @@ const volunteerName = volunteer ? `${volunteer.firstName} ${volunteer.lastName}`
     const io = req.io; // ✅ Cleaner and already injected via middleware
 
     const userRoom = `user_${rescue.user}`;
-io.to(userRoom).emit('rescueAccepted', {
+  io.to(userRoom).emit('rescueAccepted', {
   rescueId: rescue._id,
   acceptedBy: volunteerName,
   chatId: chat._id
@@ -185,21 +187,3 @@ exports.getRescueById = async (req, res) => {
 };
 
 
-exports.getRescuePositions = async (req, res) => {
-  const { id } = req.params;
-
-  // ensure the rescue exists
-  const rescue = await RescueRequest.findById(id).select('_id');
-  if (!rescue) {
-    return res.status(404).json({ message: 'Rescue not found' });
-  }
-
-  // fetch in-memory volunteer coords
-  const volunteer = positionsStore[id] || null;
-
-  // for now we don’t persist requester coords, so return null
-  return res.json({
-    requester: null,
-    volunteer
-  });
-};
