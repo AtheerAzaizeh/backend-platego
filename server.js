@@ -120,21 +120,16 @@ io.on("connection", (socket) => {
     io.to(chatId).emit("messageRead", { chatId, userId });
   });
 
-  socket.on('joinRescue', rescueId => {
+  socket.on('joinRescueRoom', ({ rescueId, userId }) => {
     const room = `rescue_${rescueId}`;
     socket.join(room);
-    console.log(`Socket ${socket.id} joined ${room}`);
+    console.log(`${userId} joined ${room}`);
   });
 
-  socket.on('rescueLocationUpdate', ({ rescueId, lat, lng }) => {
-    // 1️⃣ Save last volunteer position in memory
-    positionsStore[rescueId] = { lat, lng };
-
-    // 2️⃣ Broadcast to everyone in that rescue room
-    socket.to(`rescue_${rescueId}`)
-          .emit('rescueLocation', { lat, lng });
+  socket.on('locationUpdate', ({ rescueId, userId, coords }) => {
+    const room = `rescue_${rescueId}`;
+    socket.to(room).emit('locationUpdate', { userId, coords });
   });
-
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
